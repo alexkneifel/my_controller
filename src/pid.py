@@ -15,25 +15,7 @@ import math
 rospy.init_node('topic_publisher')
 pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 
-def middleFinder(subframe,len):
-  	b=0
-  	for x in range(0,len):
-  		if x==0:
-  			start = False
-  			a=0
-  			b=0
-		if (subframe[0][x]<100 and start == False) or (subframe[0][x]<100 and x == 0):
-			start=True
-			a = x
-    	if subframe[0][x]>100 and start == True:
-      		start=False
-      		b = x
-  	return a,b
-
 bridge = CvBridge()
-dim = 800
-ideal = 800/2
-thresh = 100
 
 def callback(data):
 	# rate = rospy.Rate(2)
