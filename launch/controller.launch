@@ -4,9 +4,5 @@
          name="move_robot" 
          output="screen">
    </node>
-<node pkg="my_controller"
-         type="hsv_threshold.py"
-         name="camera_robot" 
-         output="screen">
-   </node>
+
  </launch>
