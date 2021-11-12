@@ -35,6 +35,21 @@ class ControlTimer:
     def endTimer(self):
         pub2.publish(self.end_command)
 
+class LicensePlateDetector:
+    def __init__(self):
+        pass
+    def isRectangle(self, c):
+        peri = cv2.arcLength(c, True)
+        approx = cv2.approxPolyDP(c, 0.04 * peri, True)
+        if len(approx)==4:
+            (x, y, w, h) = cv2.boundingRect(approx)
+            ar = w / float(h)
+            if ar <= 1.05:
+                return True
+        return False
+
+
+
 
 class ProcessImage:
 
@@ -44,40 +59,93 @@ class ProcessImage:
 
     def __callback(self, data):
         cv_image = bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
-        cv2.imshow("raw image", cv_image)
-        cv2.waitKey(3)
-
-        img = cv2.imread( '/home/alexkneifel/Downloads/CroppedPlate.png', cv2.IMREAD_GRAYSCALE)
-        #note bilateral filter is slower than other filters
-        blurred_img = cv2.bilateralFilter(img,5,300,300)
-        #cv2.imshow("blurred image",blurred_img)
+        #cv2.imshow("raw image", cv_image)
         #cv2.waitKey(3)
-        edge_img = cv2.Canny(blurred_img,25,100)
-        # change these to image feed afterwards
-        cv2.imshow("edges image", edge_img)
+
+        #img = cv2.imread( '/home/alexkneifel/Downloads/CroppedPlate.png')
+        blurred_feed = cv2.medianBlur(cv_image, 5)
+
+        # Convert BGR to HSV
+        hsv = cv2.cvtColor(blurred_feed, cv2.COLOR_BGR2HSV)
+
+        uh = 157
+        us = 8 #make this guy 8
+        uv = 168
+        lh = 0
+        ls = 0
+        lv = 87
+        lower_hsv = np.array([lh, ls, lv])
+        upper_hsv = np.array([uh, us, uv])
+
+        # Threshold the HSV image to get only blue colors
+        mask = cv2.inRange(hsv, lower_hsv, upper_hsv)
+        # window_name = "HSV Calibrator"
+        # cv2.namedWindow(window_name)
+        #
+        # def nothing(x):
+        #     print("Trackbar value: " + str(x))
+        #     pass
+        #
+        # # create trackbars for Upper HSV
+        # cv2.createTrackbar('UpperH', window_name, 0, 255, nothing)
+        # cv2.setTrackbarPos('UpperH', window_name, uh)
+        #
+        # cv2.createTrackbar('UpperS', window_name, 0, 255, nothing)
+        # cv2.setTrackbarPos('UpperS', window_name, us)
+        #
+        # cv2.createTrackbar('UpperV', window_name, 0, 255, nothing)
+        # cv2.setTrackbarPos('UpperV', window_name, uv)
+        #
+        # # create trackbars for Lower HSV
+        # cv2.createTrackbar('LowerH', window_name, 0, 255, nothing)
+        # cv2.setTrackbarPos('LowerH', window_name, lh)
+        #
+        # cv2.createTrackbar('LowerS', window_name, 0, 255, nothing)
+        # cv2.setTrackbarPos('LowerS', window_name, ls)
+        #
+        # cv2.createTrackbar('LowerV', window_name, 0, 255, nothing)
+        # cv2.setTrackbarPos('LowerV', window_name, lv)
+        #
+        # font = cv2.FONT_HERSHEY_SIMPLEX
+        #
+        # print("Loaded images")
+        #
+        # while (1):
+        #     # Threshold the HSV image to get only blue colors
+        #     mask = cv2.inRange(hsv, lower_hsv, upper_hsv)
+        #     cv2.putText(mask, 'Lower HSV: [' + str(lh) + ',' + str(ls) + ',' + str(lv) + ']', (10, 30), font, 0.5,
+        #                (200, 255, 155), 1, cv2.LINE_AA)
+        #     cv2.putText(mask, 'Upper HSV: [' + str(uh) + ',' + str(us) + ',' + str(uv) + ']', (10, 60), font, 0.5,
+        #                (200, 255, 155), 1, cv2.LINE_AA)
+        #
+        #     cv2.imshow(window_name, mask)
+        #
+        #     k = cv2.waitKey(1) & 0xFF
+        #     if k == 27:
+        #         break
+        #     # get current positions of Upper HSV trackbars
+        #     uh = cv2.getTrackbarPos('UpperH', window_name)
+        #     us = cv2.getTrackbarPos('UpperS', window_name)
+        #     uv = cv2.getTrackbarPos('UpperV', window_name)
+        #     upper_blue = np.array([uh, us, uv])
+        #     # get current positions of Lower HSCV trackbars
+        #     lh = cv2.getTrackbarPos('LowerH', window_name)
+        #     ls = cv2.getTrackbarPos('LowerS', window_name)
+        #     lv = cv2.getTrackbarPos('LowerV', window_name)
+        #     upper_hsv = np.array([uh, us, uv])
+        #     lower_hsv = np.array([lh, ls, lv])
+        #
+        #     time.sleep(.1)
+        #
+        # cv2.destroyAllWindows()
+        cv2.imshow("hsv window", mask)
         cv2.waitKey(3)
 
-        keypoints = cv2.findContours(edge_img.copy(), cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-        contours = imutils.grab_contours(keypoints)
-        contours = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
 
-        location = None
-        for contour in contours:
-            approx = cv2.approxPolyDP(contour, 100, True)
-            if len(approx) ==4:
-                location = approx
-                break
-        mask = np.zeros(img.shape, np.uint8)
-        if location is not None:
-            new_image = cv2.drawContours(mask, [location], 0,255, -1)
-            # maybe i need to have non grey for this
-            new_image = cv2.bitwise_and(img,img, mask=mask)
-            cv2.imshow("contoured image",new_image )
-            cv2.waitKey(3)
 
 
         sift = cv2.xfeatures2d.SIFT_create()
-        kp_image, desc_image = sift.detectAndCompute(img, None)
+        #kp_image, desc_image = sift.detectAndCompute(img, None)
 
         # index_params = dict(algorithm=0, trees=5)
         # search_params = dict()
