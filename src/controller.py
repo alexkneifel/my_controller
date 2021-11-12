@@ -40,15 +40,14 @@ class LicensePlateDetector:
         pass
     def isRectangle(self, c):
         peri = cv2.arcLength(c, True)
-        approx = cv2.approxPolyDP(c, 0.04 * peri, True)
+        # could just make it 10?
+        approx = cv2.approxPolyDP(c, 0.04*peri, True)
         if len(approx)==4:
-            (x, y, w, h) = cv2.boundingRect(approx)
-            ar = w / float(h)
-            if ar <= 1.05:
-                return True
-        return False
-
-
+            # (x, y, w, h) = cv2.boundingRect(approx)
+            # ar = w / float(h)
+            # if ar <= 1.05:
+            return approx, True
+        return None, False
 
 
 class ProcessImage:
@@ -59,25 +58,28 @@ class ProcessImage:
 
     def __callback(self, data):
         cv_image = bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
-        #cv2.imshow("raw image", cv_image)
-        #cv2.waitKey(3)
+        # cv2.imshow("raw image", cv_image)
+        # cv2.waitKey(3)
 
-        #img = cv2.imread( '/home/alexkneifel/Downloads/CroppedPlate.png')
+        img = cv2.imread( '/home/alexkneifel/Downloads/ThreshPlate.png')
+        cv2.imshow("image", img)
         blurred_feed = cv2.medianBlur(cv_image, 5)
 
         # Convert BGR to HSV
         hsv = cv2.cvtColor(blurred_feed, cv2.COLOR_BGR2HSV)
+        homography = None
 
-        uh = 157
-        us = 8 #make this guy 8
-        uv = 168
-        lh = 0
-        ls = 0
-        lv = 87
+        uh = 0 #157
+        us = 2#8
+        uv = 215#168
+        lh = 0#0
+        ls = 0#0
+        lv = 100#87
         lower_hsv = np.array([lh, ls, lv])
         upper_hsv = np.array([uh, us, uv])
 
         # Threshold the HSV image to get only blue colors
+        # could use HSV with the key feature detection
         mask = cv2.inRange(hsv, lower_hsv, upper_hsv)
         # window_name = "HSV Calibrator"
         # cv2.namedWindow(window_name)
@@ -138,48 +140,64 @@ class ProcessImage:
         #     time.sleep(.1)
         #
         # cv2.destroyAllWindows()
+
+
+# rectangle
+#         contours = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+#         contours = imutils.grab_contours(contours)
+#         contours = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
+#         lpd = LicensePlateDetector()
+#         location = None
+#         for contour in contours:
+#             approx, rectangle = lpd.isRectangle(contour)
+#             if rectangle:
+#                 location = approx
+#                 break
+#         print(location)
+
         cv2.imshow("hsv window", mask)
         cv2.waitKey(3)
 
 
-
-
+#homography
         sift = cv2.xfeatures2d.SIFT_create()
-        #kp_image, desc_image = sift.detectAndCompute(img, None)
+        kp_image, desc_image = sift.detectAndCompute(img, None)
 
-        # index_params = dict(algorithm=0, trees=5)
-        # search_params = dict()
-        # flann = cv2.FlannBasedMatcher(index_params, search_params)
-        #
-        #
-        # grayframe = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
-        # kp_grayframe, desc_grayframe = sift.detectAndCompute(grayframe, None)
-        # matches = flann.knnMatch(desc_image, desc_grayframe, k=2)
-        #
-        # good_points = []
-        # for m, n in matches:
-        #     if m.distance < 0.6 * n.distance:
-        #         good_points.append(m)
-        #
-        # img3 = cv2.drawMatches(img, kp_image, grayframe, kp_grayframe, good_points, grayframe)
-        #
-        # cv2.imshow("matches of keypoints", img3)
-        #
-        #
-        # if len(good_points) > 10:
-        #     query_pts = np.float32([kp_image[m.queryIdx].pt for m in good_points]).reshape(-1, 1, 2)
-        #     train_pts = np.float32([kp_grayframe[m.trainIdx].pt for m in good_points]).reshape(-1, 1, 2)
-        #
-        #     matrix, mask = cv2.findHomography(query_pts, train_pts, cv2.RANSAC, 5.0)
-        #     matches_mask = mask.ravel().tolist()
-        #
-        #     h, w = img.shape
-        #     pts = np.float32([[0, 0], [0, h], [w, h], [w, 0]]).reshape(-1, 1, 2)
-        #     dst = cv2.perspectiveTransform(pts, matrix)
-        #
-        #     homography = cv2.polylines(cv_image, [np.int32(dst)], True, (255, 0, 0), 3)
-        #
-        # cv2.imshow("homography", homography)
+        index_params = dict(algorithm=0, trees=5)
+        search_params = dict()
+        flann = cv2.FlannBasedMatcher(index_params, search_params)
+
+
+        kp_grayframe, desc_grayframe = sift.detectAndCompute(mask, None)
+        matches = flann.knnMatch(desc_image, desc_grayframe, k=2)
+
+        good_points = []
+        for m, n in matches:
+            if m.distance < 0.6 * n.distance:
+                good_points.append(m)
+
+        img3 = cv2.drawMatches(img, kp_image, mask, kp_grayframe, good_points, mask)
+
+        cv2.imshow("matches of keypoints", img3)
+        cv2.waitKey(3)
+
+
+        if len(good_points) > 10:
+            query_pts = np.float32([kp_image[m.queryIdx].pt for m in good_points]).reshape(-1, 1, 2)
+            train_pts = np.float32([kp_grayframe[m.trainIdx].pt for m in good_points]).reshape(-1, 1, 2)
+
+            matrix, mask2 = cv2.findHomography(query_pts, train_pts, cv2.RANSAC, 5.0)
+            matches_mask = mask2.ravel().tolist()
+
+            h, w, z = img.shape
+            pts = np.float32([[0, 0], [0, h], [w, h], [w, 0]]).reshape(-1, 1, 2)
+            dst = cv2.perspectiveTransform(pts, matrix)
+
+            homography = cv2.polylines(cv_image, [np.int32(dst)], True, (255, 0, 0), 3)
+
+        if homography is not None:
+            cv2.imshow("homography", homography)
+            cv2.waitKey(3)
 
 
 
