@@ -43,11 +43,34 @@ class LicensePlateDetector:
         # could just make it 10?
         approx = cv2.approxPolyDP(c, 0.04*peri, True)
         if len(approx)==4:
-            # (x, y, w, h) = cv2.boundingRect(approx)
-            # ar = w / float(h)
-            # if ar <= 1.05:
-            return approx, True
+            (x, y, w, h) = cv2.boundingRect(approx)
+            ar = w / float(h)
+            if ar <= 1.05:
+                return approx, True
         return None, False
+    def isMyRectangle(self, points):
+        # if 0<dst[1][0][0]-dst[0][0][0] <=35 and 190< dst[1][0][1]-dst[0][0][1] < 310:
+        #         if 0 < dst[2][0][0] - dst[3][0][0] <= 35 and 190 < dst[2][0][1] - dst[3][0][1] < 310:
+        topLefty = points[0][0][0]
+        topLeftx = points[0][0][1]
+        topRighty = points[1][0][0]
+        topRightx = points[1][0][1]
+        botLefty = points[3][0][0]
+        botLeftx = points[3][0][1]
+        botRighty = points[2][0][0]
+        botRightx = points[2][0][1]
+        topWidth = topRightx - topLeftx
+        botWidth = botRightx - botLeftx
+        leftHeight = topLefty - botRighty
+        rightHeight = topRighty - botLefty
+
+        if 0.75< topWidth/botWidth <1.25 and 0.75< rightHeight/leftHeight <1.25:
+            return True
+
+        # if it is a rectangle return that it is
+        #     crop = [topLeftx:var = topRightx, topLefty:botLefty]
+        #     return True,
+        #  return
 
 
 class ProcessImage:
@@ -84,88 +107,28 @@ class ProcessImage:
         lower_hsv = np.array([lh, ls, lv])
         upper_hsv = np.array([uh, us, uv])
 
-        # Threshold the HSV image to get only blue colors
-        # could use HSV with the key feature detection
         mask = cv2.inRange(hsv, lower_hsv, upper_hsv)
-#         # window_name = "HSV Calibrator"
-#         # cv2.namedWindow(window_name)
-#         #
-#         # def nothing(x):
-#         #     print("Trackbar value: " + str(x))
-#         #     pass
-#         #
-#         # # create trackbars for Upper HSV
-#         # cv2.createTrackbar('UpperH', window_name, 0, 255, nothing)
-#         # cv2.setTrackbarPos('UpperH', window_name, uh)
-#         #
-#         # cv2.createTrackbar('UpperS', window_name, 0, 255, nothing)
-#         # cv2.setTrackbarPos('UpperS', window_name, us)
-#         #
-#         # cv2.createTrackbar('UpperV', window_name, 0, 255, nothing)
-#         # cv2.setTrackbarPos('UpperV', window_name, uv)
-#         #
-#         # # create trackbars for Lower HSV
-#         # cv2.createTrackbar('LowerH', window_name, 0, 255, nothing)
-#         # cv2.setTrackbarPos('LowerH', window_name, lh)
-#         #
-#         # cv2.createTrackbar('LowerS', window_name, 0, 255, nothing)
-#         # cv2.setTrackbarPos('LowerS', window_name, ls)
-#         #
-#         # cv2.createTrackbar('LowerV', window_name, 0, 255, nothing)
-#         # cv2.setTrackbarPos('LowerV', window_name, lv)
-#         #
-#         # font = cv2.FONT_HERSHEY_SIMPLEX
-#         #
-#         # print("Loaded images")
-#         #
-#         # while (1):
-#         #     # Threshold the HSV image to get only blue colors
-#         #     mask = cv2.inRange(hsv, lower_hsv, upper_hsv)
-#         #     cv2.putText(mask, 'Lower HSV: [' + str(lh) + ',' + str(ls) + ',' + str(lv) + ']', (10, 30), font, 0.5,
-#         #                (200, 255, 155), 1, cv2.LINE_AA)
-#         #     cv2.putText(mask, 'Upper HSV: [' + str(uh) + ',' + str(us) + ',' + str(uv) + ']', (10, 60), font, 0.5,
-#         #                (200, 255, 155), 1, cv2.LINE_AA)
-#         #
-#         #     cv2.imshow(window_name, mask)
-#         #
-#         #     k = cv2.waitKey(1) & 0xFF
-#         #     if k == 27:
-#         #         break
-#         #     # get current positions of Upper HSV trackbars
-#         #     uh = cv2.getTrackbarPos('UpperH', window_name)
-#         #     us = cv2.getTrackbarPos('UpperS', window_name)
-#         #     uv = cv2.getTrackbarPos('UpperV', window_name)
-#         #     upper_blue = np.array([uh, us, uv])
-#         #     # get current positions of Lower HSCV trackbars
-#         #     lh = cv2.getTrackbarPos('LowerH', window_name)
-#         #     ls = cv2.getTrackbarPos('LowerS', window_name)
-#         #     lv = cv2.getTrackbarPos('LowerV', window_name)
-#         #     upper_hsv = np.array([uh, us, uv])
-#         #     lower_hsv = np.array([lh, ls, lv])
-#         #
-#         #     time.sleep(.1)
-#         #
-#         # cv2.destroyAllWindows()
-#
-#
-# # rectangle
-# #         contours = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-# #         contours = imutils.grab_contours(contours)
-# #         contours = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
-# #         lpd = LicensePlateDetector()
-# #         location = None
-# #         for contour in contours:
-# #             approx, rectangle = lpd.isRectangle(contour)
-# #             if rectangle:
-# #                 location = approx
-# #                 break
-# #         print(location)
-#
-#         # cv2.imshow("hsv window", mask)
-#         # cv2.waitKey(3)
-#
-#
-# #homography
+
+
+
+# rectangle
+#         contours = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+#         contours = imutils.grab_contours(contours)
+#         contours = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
+#         lpd = LicensePlateDetector()
+#         location = None
+#         for contour in contours:
+#             approx, rectangle = lpd.isRectangle(contour)
+#             if rectangle:
+#                 location = approx
+#                 break
+#         print(location)
+
+        # cv2.imshow("hsv window", mask)
+        # cv2.waitKey(3)
+
+
+#homography
 
         sift = cv2.xfeatures2d.SIFT_create()
         kp_image, desc_image = sift.detectAndCompute(img, None)
@@ -173,7 +136,6 @@ class ProcessImage:
         index_params = dict(algorithm=0, trees=5)
         search_params = dict()
         flann = cv2.FlannBasedMatcher(index_params, search_params)
-
 
         kp_grayframe, desc_grayframe = sift.detectAndCompute(mask, None)
         matches = flann.knnMatch(desc_image, desc_grayframe, k=2)
@@ -200,44 +162,24 @@ class ProcessImage:
             pts = np.float32([[0, 0], [0, h], [w, h], [w, 0]]).reshape(-1, 1, 2)
             dst = cv2.perspectiveTransform(pts, matrix)
 
-            homography = cv2.polylines(cv_image_crop, [np.int32(dst)], True, (255, 0, 0), 3)
+            #maybe instead of these specific values should check if its ractangle
+            # if 0<dst[1][0][0]-dst[0][0][0] <=35 and 190< dst[1][0][1]-dst[0][0][1] < 310:
+            #         if 0 < dst[2][0][0] - dst[3][0][0] <= 35 and 190 < dst[2][0][1] - dst[3][0][1] < 310:
 
-        if homography is not None:
-            cv2.imshow("homography", homography)
-            cv2.waitKey(3)
 
+            lpd = LicensePlateDetector()
+            if lpd.isMyRectangle(dst):
+                homography = cv2.polylines(cv_image_crop, [np.int32(dst)], True, (255, 0, 0), 3)
+                cv2.imshow("homography", homography)
+                cv2.waitKey(3)
+                license_plate_crop = cv_image_crop[int(dst[0][0][1]): int(dst[1][0][1]), int(dst[0][0][0]):int(dst[3][0][0])]
+                cv2.imshow("license plate", license_plate_crop)
+                cv2.waitKey(3)
 
 
     def process_image(self):
         listen = rospy.Subscriber('/R1/pi_camera/image_raw', Image, self.__callback)
         rospy.spin()
-        # use the following if you want to filter image in some way, probably should go in callback
-        # threshold = 150
-        # data = None
-        # while data is None:
-        #     try:
-        #         data = rospy.wait_for_message('/R1/pi_camera/image_raw', Image,
-        #                                       timeout=5)
-        #     except:
-        #         pass
-        # try:
-        #     cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
-        # except CvBridgeError as e:
-        #     print(e)
-        #
-        # # cv2.imshow("raw", cv_image)
-        # # could play with threshold worked for lab 3
-        #
-        # gray_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2GRAY)
-        # _, binary_image = cv2.threshold(gray_image, threshold, 255, cv2.THRESH_BINARY_INV)
-        #
-        # cv2.imshow("gray image", gray_image)
-        # cv2.waitKey(3)
-        # cv2.imshow("binary image", binary_image)
-        # cv2.waitKey(3)
-        #
-        # rospy.spin()
-        # where should I put rospy.spin() ?
 
         return True
 
