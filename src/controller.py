@@ -14,9 +14,6 @@ from cv_bridge import CvBridge, CvBridgeError
 import matplotlib.pyplot as plt
 import imutils
 
-
-bridge = CvBridge()
-
 rospy.init_node('publisher', anonymous=True)
 pub = rospy.Publisher('/R1/cmd_vel', Twist, queue_size=1)
 pub2 = rospy.Publisher('/license_plate', String, queue_size=1)
@@ -67,10 +64,6 @@ class LicensePlateDetector:
         if 0.75< topWidth/botWidth <1.25 and 0.75< rightHeight/leftHeight <1.25:
             return True
 
-        # if it is a rectangle return that it is
-        #     crop = [topLeftx:var = topRightx, topLefty:botLefty]
-        #     return True,
-        #  return
 
 
 class ProcessImage:
@@ -82,22 +75,17 @@ class ProcessImage:
     def __callback(self, data):
         cv_image = bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
         grayframe = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
-        # cv2.imshow("raw image", cv_image)
-        # cv2.waitKey(3)
         height, width = grayframe.shape
         cv_image_crop = cv_image[int(height/3):height, 30:width/2]
-        # cv2.imshow("Image crop", cv_image_crop)
-        # cv2.waitKey(3)
-
 
         img = cv2.imread( '/home/alexkneifel/Downloads/ThreshPlate.png', cv2.IMREAD_GRAYSCALE)
-#         cv2.imshow("image", img)
+        # cv2.imshow("image", img)
         blurred_feed = cv2.medianBlur(cv_image_crop, 5)
-#
-#         # Convert BGR to HSV
+
+# Convert BGR to HSV
         hsv = cv2.cvtColor(blurred_feed, cv2.COLOR_BGR2HSV)
         homography = None
-#
+
         uh = 0 #157
         us = 2#8
         uv = 215#168
@@ -108,25 +96,6 @@ class ProcessImage:
         upper_hsv = np.array([uh, us, uv])
 
         mask = cv2.inRange(hsv, lower_hsv, upper_hsv)
-
-
-
-# rectangle
-#         contours = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-#         contours = imutils.grab_contours(contours)
-#         contours = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
-#         lpd = LicensePlateDetector()
-#         location = None
-#         for contour in contours:
-#             approx, rectangle = lpd.isRectangle(contour)
-#             if rectangle:
-#                 location = approx
-#                 break
-#         print(location)
-
-        # cv2.imshow("hsv window", mask)
-        # cv2.waitKey(3)
-
 
 #homography
 
@@ -162,10 +131,6 @@ class ProcessImage:
             pts = np.float32([[0, 0], [0, h], [w, h], [w, 0]]).reshape(-1, 1, 2)
             dst = cv2.perspectiveTransform(pts, matrix)
 
-            #maybe instead of these specific values should check if its ractangle
-            # if 0<dst[1][0][0]-dst[0][0][0] <=35 and 190< dst[1][0][1]-dst[0][0][1] < 310:
-            #         if 0 < dst[2][0][0] - dst[3][0][0] <= 35 and 190 < dst[2][0][1] - dst[3][0][1] < 310:
-
 
             lpd = LicensePlateDetector()
             if lpd.isMyRectangle(dst):
@@ -185,8 +150,8 @@ class ProcessImage:
 
 
 
-
 timer = ControlTimer()
 timer.startTimer()
 process_image = ProcessImage()
 process_image.process_image()
+#need to find a way to stop timer
