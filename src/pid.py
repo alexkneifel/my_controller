@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from __future__ import print_function
 import rospy
 from geometry_msgs.msg import Twist
@@ -12,32 +14,25 @@ import numpy as np
 import colorsys
 import math
 
-rospy.init_node('topic_publisher')
-pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
-
 bridge = CvBridge()
 
-def callback(data):
-	# rate = rospy.Rate(2)
+#rospy.init_node('topic_publisher')
+
+rospy.init_node('topic_subscriber')
+
+def callback(data, lastTurn=None):
 	cv_image = bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
-	gray = cv2.cvtColor(cv_image, cv2.COLOR_RGB2GRAY)
-	subframe = gray[799:dim, 0:dim]
-	a,b = middleFinder(subframe,dim)
-	if a is not None and b is not None:
-		# middle = a+(b-a)/2
-		middle = a
-	print(str(a) + " " + str(b))
-	move = Twist()
-	if middle==0:
-		move.angular.z = 2
-	else:
-		move.angular.z = -(middle-ideal)/40
-		move.linear.x=0.5
+	firstValLoc = 0
+	lastValLoc = 0
+	desiredMiddle = 400
+	firstValFound = False
+	lastValFound = False
+	cv2.imshow("camera_output", cv_image)
+	print(cv_image)
+	# gray = cv2.cvtColor(cv_image, cv2.COLOR_RGB2GRAY)
+	# croppedframe = gray[799:800, 0:800]
 
-	# move.linear.x = 0.5
-	pub.publish(move)
-	# rate.sleep()
 
-listen = rospy.Subscriber('/rrbot/camera1/image_raw', Image, callback)
+listen = rospy.Subscriber('/R1/pi_camera/image_raw', Image, callback)
 
 rospy.spin()

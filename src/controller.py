@@ -74,8 +74,11 @@ class gazeboClock:
 
 class moveBot:
     def __init__(self):
-        
-
+        self.move = Twist()
+    def moveForward(self,forwdVal,turnVal):
+        self.move.linear.x = forwdVal
+        self.move.angular.z = turnVal
+        pub.publish(self.move)
 
 class ProcessImage:
 
@@ -87,13 +90,22 @@ class ProcessImage:
         self.timer.startTimer()
         self.startTime = self.clock.getTime()
         self.stopped = False
+        self.moveBot = moveBot()
+
 
     def __callback(self, data):
+
         currentTime = self.clock.getTime()
         if currentTime - self.startTime > 10 and self.stopped is not True:
+            self.moveBot.moveForward(0,0)
             self.timer.endTimer()
             self.stopped = True
         else:
+            if currentTime - self.startTime < 2:
+                self.moveBot.moveForward(0.3, 1)
+            else:
+                self.moveBot.moveForward(0.2, 0.0)
+
             cv_image = bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
             grayframe = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
             height, width = grayframe.shape
