@@ -43,7 +43,7 @@ class gazeboClock:
     def getTime(self):
         return rospy.get_time()
 
-class firstMove:
+class moveBot:
     def __init__(self):
         self.move = Twist()
     def moveForward(self,forwdVal,turnVal):
@@ -61,7 +61,7 @@ class ControlLoop:
         self.timer.startTimer()
         self.startTime = self.clock.getTime()
         self.stopped = False
-        self.firstMove = firstMove()
+        self.moveBot = moveBot()
         self.pid = pid.PidCtrl()
         self.processPlate = process_plate.ProcessPlate()
 
@@ -76,18 +76,21 @@ class ControlLoop:
 
         currentTime = self.clock.getTime()
         if currentTime - self.startTime > 10 and self.stopped is not True:
-            self.firstMove.moveForward(0,0)
+            self.moveBot.moveForward(0,0)
             self.timer.endTimer()
             self.stopped = True
         else:
-            if currentTime - self.startTime < 2:
-                self.firstMove.moveForward(0.3, 1)
-                self.pid.nextMove(cv_image)
-                self.processPlate.proccessPlate(cv_image)
+            if currentTime - self.startTime < 1:
+                print("hi")
+                #self.moveBot.moveForward(0.3, 0.7)
+                #self.pid.nextMove(cv_image)
+                #self.processPlate.proccessPlate(cv_image)
                 # it running to this once self stopped is true
             else:
-                self.firstMove.moveForward(0.2, 0.0)
-                self.processPlate.proccessPlate(cv_image)
+                #self.firstMove.moveForward(0.2, 0.0)
+                #self.processPlate.proccessPlate(cv_image)
+                fwdVal, turnVal = self.pid.nextMove(cv_image)
+                self.moveBot.moveForward(fwdVal, turnVal)
 
 
 control_loop = ControlLoop()

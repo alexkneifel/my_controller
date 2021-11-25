@@ -36,7 +36,7 @@ class ProcessPlate:
         if 0.75< topWidth/botWidth <1.25 and 0.75< rightHeight/leftHeight <1.25:
             return True
 
-# perhaps could 
+# perhaps could
     def proccessPlate(self, cv_image):
         grayframe = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
         height, width = grayframe.shape
@@ -85,7 +85,6 @@ class ProcessPlate:
 
 
         if len(good_points) > 10:
-            print("Found enough good matches")
             query_pts = np.float32([kp_image[m.queryIdx].pt for m in good_points]).reshape(-1, 1, 2)
             train_pts = np.float32([kp_grayframe[m.trainIdx].pt for m in good_points]).reshape(-1, 1, 2)
 
@@ -97,7 +96,6 @@ class ProcessPlate:
             dst = cv2.perspectiveTransform(pts, matrix)
 
             if self.isMyRectangle(dst):
-                print("matches are a rectangle")
                 homography = cv2.polylines(cv_image_crop, [np.int32(dst)], True, (255, 0, 0), 3)
                 cv2.imshow("homography", homography)
                 cv2.waitKey(1)
