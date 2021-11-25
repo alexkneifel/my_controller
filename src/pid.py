@@ -20,6 +20,7 @@ import imutils
 class PidCtrl:
     def __init__(self):
         self.lastState = 0
+        self.desiredVal = 29600
         pass
 
     # need to finish these two functions and make sure they work
@@ -35,6 +36,9 @@ class PidCtrl:
 
     def __countBackZeros(self, w_zeros, no_leading_zeros, front_zero):
         return int(w_zeros - front_zero - no_leading_zeros)
+
+    def __computeAverage(self,section1,section2,section3):
+        return (section1+section2+section3)/3
 
     def nextMove(self, cv_image):
         fwdSpeed = 0.2
@@ -104,7 +108,8 @@ class PidCtrl:
         print("count " + str(count))
 
 # go straight unless frontZeros=0 and backZeros>0, then turn until minIndex is 4 or 5
-        if frontZeros ==0 and backZeros > 0 or self.lastState ==1:
+        #print("sum of count: " + str(sum(count)))
+        if frontZeros ==0 and backZeros > 1 or self.lastState ==1:
             if min_index == 4 or min_index == 5:
                 fwdSpeed = 0.3
                 turnSpeed = 0
@@ -113,86 +118,30 @@ class PidCtrl:
                 fwdSpeed = 0
                 turnSpeed = 3
                 self.lastState = 1
+
+# or maybe middle val
+#         elif count[4] > 30000 and count[5] > 30000:
+#             fwdSpeed = 0.3
+#             turnSpeed = 0
+
         else:
+            scaledAmt = 0.0007
             fwdSpeed = 0.3
-            turnSpeed = 0
             self.lastState = 0
-
-        # slowTurnFwd = 0
-        # sharpTurn = 3
-        # mediumTurn = 2
-        # slowTurn = 1
-        # turn = 2
-        # #check zeros first
-        # if np.count_nonzero(count) == 0:
-        #     fwdSpeed = 0
-        #     turnSpeed = 6
-        #
-        # elif backZeros > 0:
-        #     fwdSpeed = slowTurnFwd
-        #     turnSpeed = turn * backZeros
-        # elif frontZeros > 0:
-        #     if count[4] <20000 or count[5] < 20000:
-        #         fwdSpeed = 0.3
-        #         turnSpeed = 0
-        #     else:
-        #         fwdSpeed = slowTurnFwd
-        #         turnSpeed = -turn * frontZeros
-        #
-        # # then check indicese
-        # # elif count[min_index] > 11000 :
-        # #     fwdSpeed = 0.3
-        # #     turnSpeed = 0
-        # elif 2 < min_index <= 6:
-        #     turnSpeed = 0
-        #     if min_index == 3:
-        #         fwdSpeed = 0.3
-        #     elif min_index == 4 or min_index ==5:
-        #         fwdSpeed = 0.45
-        #     elif min_index == 6:
-        #         fwdSpeed = 0.3
-        # elif 6 < min_index:
-        #     if min_index == 7:
-        #         fwdSpeed = slowTurnFwd
-        #         turnSpeed = sharpTurn
-        #     elif min_index == 8:
-        #         fwdSpeed = slowTurnFwd
-        #         turnSpeed = mediumTurn
-        #     elif min_index == 9:
-        #         fwdSpeed = slowTurnFwd
-        #         turnSpeed = slowTurn
-        # else:
-        #     if count[4] <25000 or count[5] < 25000:
-        #         fwdSpeed = 0.3
-        #         turnSpeed = 0
-        #     else:
-        #         if min_index == 0:
-        #                 fwdSpeed = 0.2
-        #                 turnSpeed = -slowTurn*0.5
-        #         elif min_index == 1:
-        #                 fwdSpeed = 0.2
-        #                 turnSpeed = -slowTurn*0.5
-        #         elif min_index == 2:
-        #                 fwdSpeed = 0.2
-        #                 turnSpeed = -slowTurn*0.5
+            difference = abs(self.desiredVal - self.__computeAverage(count[6],count[7],count[8]))
+            # this forces it to be awfully on the line on the right , maybe say if most right hand one is below a certain val?
+            if backZeros > 0:
+                turnSpeed = difference*scaledAmt
+                if turnSpeed > 5:
+                    turnSpeed = 5
+            else:
+                turnSpeed = -difference*scaledAmt
+                if abs(turnSpeed) > 5:
+                    turnSpeed = -5
+            #if backZeros>0 then turn left scaled amt by difference
+            # otherwise turn right a scaled amount
 
 
-
-
-
-        # if 0 <= max_index <6:
-        #     if num_nonzero == 6:
-        #         fwdSpeed = 0.3
-        #         turnSpeed = 0
-        #     elif num_nonzero == 4:
-        #         fwdSpeed = 0.1
-        #         turnSpeed = 3
-        #     else:
-        #         fwdSpeed = 0.2
-        #         turnSpeed = 1
-        # else:
-        #     fwdSpeed = 0.1
-        #     turnSpeed = -0.3
 
         print("forward: " + str(fwdSpeed))
         print("turn: " + str(turnSpeed))
