@@ -27,3 +27,5 @@ ENPH 353 Project involving ROS, Gazebo, Python, OpenCV, PID controllers, and DNN
     2. To stop the timer for the competition send a message to the /license_plate topic with license plate ID -1 (minus one) i.e str(‘TeamRed,multi12,-1,XR58’)
 6. Other rules
     1. You must design and train your own neural networks. You cannot use pre-trained neural networks (i.e. Tesseract)
+
+![GItHub](https://user-images.githubusercontent.com/26236431/143627080-687170e5-b800-4004-91d5-0d557ea5f35c.png)
