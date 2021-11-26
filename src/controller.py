@@ -83,7 +83,7 @@ class ControlLoop:
             if currentTime - self.startTime < 1.5:
                 print("hi")
                 if currentTime - self.startTime < 1:
-                    self.moveBot.moveForward(0.32, 0)
+                    self.moveBot.moveForward(0.35, 0.08)
                 else:
                     self.moveBot.moveForward(0, 3)
                 #self.pid.nextMove(cv_image)

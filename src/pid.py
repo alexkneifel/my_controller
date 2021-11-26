@@ -21,6 +21,7 @@ class PidCtrl:
     def __init__(self):
         self.lastState = 0
         self.desiredVal = 29600
+        self.lastTurnSpeed = 0
         pass
 
     # need to finish these two functions and make sure they work
@@ -112,10 +113,10 @@ class PidCtrl:
         if frontZeros ==0 and backZeros > 1 or self.lastState ==1:
             if min_index == 4 or min_index == 5:
                 fwdSpeed = 0.3
-                turnSpeed = 0
+                turnSpeed = 0.05
                 self.lastState = 0
             else:
-                fwdSpeed = 0
+                fwdSpeed = 0.2
                 turnSpeed = 3
                 self.lastState = 1
 
@@ -125,24 +126,28 @@ class PidCtrl:
 #             turnSpeed = 0
 
         else:
-            scaledAmt = 0.0007
-            fwdSpeed = 0.3
-            self.lastState = 0
+            left_p = 0.0003
+            right_p = 0.0003
+            fwdSpeed = 0.34
             difference = abs(self.desiredVal - self.__computeAverage(count[6],count[7],count[8]))
             # this forces it to be awfully on the line on the right , maybe say if most right hand one is below a certain val?
             if backZeros > 0:
-                turnSpeed = difference*scaledAmt
-                if turnSpeed > 5:
-                    turnSpeed = 5
+                turnSpeed = difference*left_p
+                if turnSpeed > 3:
+                    # if self.lastState == 0:
+                    #     turnSpeed = (5 + self.lastTurnSpeed)/2
+                    # else:
+                    turnSpeed = 3
             else:
-                turnSpeed = -difference*scaledAmt
-                if abs(turnSpeed) > 5:
-                    turnSpeed = -5
+                turnSpeed = -difference*right_p
+                if abs(turnSpeed) > 3:
+                    turnSpeed = -3
+            self.lastState = 0
             #if backZeros>0 then turn left scaled amt by difference
             # otherwise turn right a scaled amount
 
 
-
+        self.lastTurnSpeed = turnSpeed
         print("forward: " + str(fwdSpeed))
         print("turn: " + str(turnSpeed))
         return fwdSpeed,turnSpeed
