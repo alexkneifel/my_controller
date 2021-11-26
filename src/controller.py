@@ -86,11 +86,7 @@ class ControlLoop:
                     self.moveBot.moveForward(0.35, 0.08)
                 else:
                     self.moveBot.moveForward(0, 3)
-                #self.pid.nextMove(cv_image)
-                #self.processPlate.proccessPlate(cv_image)
-                # it running to this once self stopped is true
             else:
-                #self.firstMove.moveForward(0.2, 0.0)
                 #self.processPlate.proccessPlate(cv_image)
                 fwdVal, turnVal = self.pid.nextMove(cv_image)
                 self.moveBot.moveForward(fwdVal, turnVal)
