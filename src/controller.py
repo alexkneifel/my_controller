@@ -80,9 +80,12 @@ class ControlLoop:
             self.timer.endTimer()
             self.stopped = True
         else:
-            if currentTime - self.startTime < 1:
+            if currentTime - self.startTime < 1.5:
                 print("hi")
-                #self.moveBot.moveForward(0.3, 0.7)
+                if currentTime - self.startTime < 1:
+                    self.moveBot.moveForward(0.32, 0)
+                else:
+                    self.moveBot.moveForward(0, 3)
                 #self.pid.nextMove(cv_image)
                 #self.processPlate.proccessPlate(cv_image)
                 # it running to this once self stopped is true
