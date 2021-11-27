@@ -71,7 +71,7 @@ class ProcessPlate:
         plt.hist(s.ravel(), 256, [0, 256], alpha = 0.5, label ="S P1")
         plt.hist(result.ravel(), 256, [0, 256], alpha = 0.5, label= "Eql V")
         plt.hist(result2.ravel(), 256, [0, 256], alpha = 0.5, label= "Eql S")
-        plt.title('P6cd')
+        plt.title('P6')
         plt.legend(loc = 'upper right')
         plt.show()
         # plt.hist(result.ravel(), 256, [0, 256]);
