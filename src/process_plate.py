@@ -37,12 +37,56 @@ class ProcessPlate:
 #             return True
 #
 # # perhaps could
+    def __normalize_img(self, img):
+        cv.imshow("not normalized", img)
+        cv.waitKey(1)
+        hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)  # Convert to hsv color system
+        h, s, v = cv.split(hsv)
+        result = cv.equalizeHist(v)
+        result2 = cv.equalizeHist(s)
+        hsv = cv.merge((h, result2, result))
+        rgb = cv.cvtColor(hsv, cv.COLOR_HSV2BGR)
+
+        cv.imshow("normalized s and v", rgb)
+        cv.waitKey(1)
+
+
+
+
+        #blurred_feed = cv.medianBlur(img, 5)
+        # img_bw = 255 * (cv.cvtColor(blurred_feed, cv.COLOR_BGR2GRAY) > 5).astype('uint8')
+        #
+        # se1 = cv.getStructuringElement(cv.MORPH_RECT, (5, 5))
+        # se2 = cv.getStructuringElement(cv.MORPH_RECT, (2, 2))
+        # mask = cv.morphologyEx(img_bw, cv.MORPH_CLOSE, se1)
+        # mask = cv.morphologyEx(mask, cv.MORPH_OPEN, se2)
+        #
+        # mask = np.dstack([mask, mask, mask]) / 255
+        # out = blurred_feed * mask
+
+        height, width, chan = img.shape
+
+        norm=np.zeros((height,width,3),np.float32)
+        norm_rgb=np.zeros((height,width,3),np.uint8)
+
+        b=rgb[:,:,0]
+        g=rgb[:,:,1]
+        r=rgb[:,:,2]
+
+        sum=b+g+r
+
+        norm[:,:,0]=(b/sum)*255
+        norm[:,:,1]=(g/sum)*255
+        norm[:,:,2]=(r/sum)*255
+
+        norm_rgb=cv.convertScaleAbs(norm)
+        cv.imshow("normalized img", norm_rgb)
+        cv.waitKey(1)
+
     def proccessPlate(self, cv_image):
-        gray = cv.cvtColor(cv_image,cv.COLOR_BGR2GRAY)
-        # is this supposed to process gray not cv_image
-        mask = cv.inRange(cv_image,(100,0,0),(225,80,80))
-        mask_rgb = cv.cvtColor(mask,cv.COLOR_GRAY2BGR)
-        cv.imshow('filter', mask_rgb)
+        self.__normalize_img(cv_image)
+
+
 #         grayframe = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
 #         height, width = grayframe.shape
 #         cv_image_crop = cv_image[int(height/3):height, 30:width/2]
@@ -107,33 +151,6 @@ class ProcessPlate:
 #                 license_plate_crop = cv_image_crop[int(dst[0][0][1]): int(dst[1][0][1]), int(dst[0][0][0]):int(dst[3][0][0])]
 #                 cv2.imshow("license plate", license_plate_crop)
 #                 cv2.waitKey(1)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
