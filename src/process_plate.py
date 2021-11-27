@@ -18,139 +18,166 @@ import imutils
 class ProcessPlate:
 
     def __init__(self):
-       pass
-#     def isMyRectangle(self, points):
-#         topLefty = points[0][0][0]
-#         topLeftx = points[0][0][1]
-#         topRighty = points[1][0][0]
-#         topRightx = points[1][0][1]
-#         botLefty = points[3][0][0]
-#         botLeftx = points[3][0][1]
-#         botRighty = points[2][0][0]
-#         botRightx = points[2][0][1]
-#         topWidth = topRightx - topLeftx
-#         botWidth = botRightx - botLeftx
-#         leftHeight = topLefty - botRighty
-#         rightHeight = topRighty - botLefty
-#
-#         if 0.75< topWidth/botWidth <1.25 and 0.75< rightHeight/leftHeight <1.25:
-#             return True
+        self.s = None
+        self.v = None
+        self.setVal = False
+        self.max_s = 0
+        self.max_v = 0
+
+    def isMyRectangle(self, points):
+        topLefty = points[0][0][0]
+        topLeftx = points[0][0][1]
+        topRighty = points[1][0][0]
+        topRightx = points[1][0][1]
+        botLefty = points[3][0][0]
+        botLeftx = points[3][0][1]
+        botRighty = points[2][0][0]
+        botRightx = points[2][0][1]
+        topWidth = topRightx - topLeftx
+        botWidth = botRightx - botLeftx
+        leftHeight = topLefty - botRighty
+        rightHeight = topRighty - botLefty
+
+        if 0.75< topWidth/botWidth <1.25 and 0.75< rightHeight/leftHeight <1.25:
+            return True
 #
 # # perhaps could
     def __normalize_img(self, img):
-        cv.imshow("not normalized", img)
-        cv.waitKey(1)
+        # cv.imshow("not normalized", img)
+        # blur = cv.medianBlur(img, 5)
+        # # cv.waitKey(1)
+        img = cv.imread('/home/alexkneifel/Pictures/nml_P6.png', cv.IMREAD_COLOR)
+
         hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)  # Convert to hsv color system
         h, s, v = cv.split(hsv)
+        avg_s  = np.mean(s)
+        avg_v = np.mean(v)
         result = cv.equalizeHist(v)
         result2 = cv.equalizeHist(s)
-        hsv = cv.merge((h, result2, result))
-        rgb = cv.cvtColor(hsv, cv.COLOR_HSV2BGR)
+        # if np.max(result) > self.max_v:
+        #     self.max_v = np.max(result)
+        # if np.max(result2) > self.max_s:
+        #     self.max_s = np.max(result2)
+        # average v is same everywhere in the world
+        print("avg v " + str(avg_s))
+        # avg s changes though
+        print("avg s " + str(avg_v))
+        print("eql avg v " + str(np.mean(result)))
+        # avg s changes though
+        print("eql avg s " + str(np.mean(result2)))
 
-        cv.imshow("normalized s and v", rgb)
-        cv.waitKey(1)
+        plt.figure(figsize=(8,6))
+        plt.hist(v.ravel(), 256, [0, 256], alpha = 0.5, label ="V P1")
+        plt.hist(s.ravel(), 256, [0, 256], alpha = 0.5, label ="S P1")
+        plt.hist(result.ravel(), 256, [0, 256], alpha = 0.5, label= "Eql V")
+        plt.hist(result2.ravel(), 256, [0, 256], alpha = 0.5, label= "Eql S")
+        plt.title('P6cd')
+        plt.legend(loc = 'upper right')
+        plt.show()
+        # plt.hist(result.ravel(), 256, [0, 256]);
+        # plt.title('Equalize V')
+        # plt.show()
+        # plt.hist(result2.ravel(), 256, [0, 256]);
+        # plt.title('Equalize S')
+        # plt.show()
 
+        # hsv = cv.merge((h, result2, result))
+        # rgb = cv.cvtColor(hsv, cv.COLOR_HSV2BGR)
 
-
-
-        #blurred_feed = cv.medianBlur(img, 5)
-        # img_bw = 255 * (cv.cvtColor(blurred_feed, cv.COLOR_BGR2GRAY) > 5).astype('uint8')
+        # #
+        #blur = cv.medianBlur(rgb,5)
+        # cv.imshow("normalized s and v", rgb)
+        # cv.waitKey(1)
+        # hsv = cv.cvtColor(blur, cv.COLOR_BGR2HSV)
+        # homography = None
         #
-        # se1 = cv.getStructuringElement(cv.MORPH_RECT, (5, 5))
-        # se2 = cv.getStructuringElement(cv.MORPH_RECT, (2, 2))
-        # mask = cv.morphologyEx(img_bw, cv.MORPH_CLOSE, se1)
-        # mask = cv.morphologyEx(mask, cv.MORPH_OPEN, se2)
+        # uh = 23 #157
+        # us = 255#8
+        # uv = 215#168
+        # lh = 1#0
+        # ls = 0#0
+        # lv = 0#87
+        # lower_hsv = np.array([lh, ls, lv])
+        # upper_hsv = np.array([uh, us, uv])
         #
-        # mask = np.dstack([mask, mask, mask]) / 255
-        # out = blurred_feed * mask
+        # mask = cv.inRange(hsv, lower_hsv, upper_hsv)
+        #kernel = np.ones((5,5), np.uint8)
+        # img_dilation = cv.dilate(mask, kernel, iterations=1)
+        # #img_erosion = cv.erode(img_dilation, kernel, iterations=1)
+        #
+        # cv.imshow('Dilation', img_dilation)
+        # cv.waitKey(1)
 
-        height, width, chan = img.shape
 
-        norm=np.zeros((height,width,3),np.float32)
-        norm_rgb=np.zeros((height,width,3),np.uint8)
-
-        b=rgb[:,:,0]
-        g=rgb[:,:,1]
-        r=rgb[:,:,2]
-
-        sum=b+g+r
-
-        norm[:,:,0]=(b/sum)*255
-        norm[:,:,1]=(g/sum)*255
-        norm[:,:,2]=(r/sum)*255
-
-        norm_rgb=cv.convertScaleAbs(norm)
-        cv.imshow("normalized img", norm_rgb)
-        cv.waitKey(1)
 
     def proccessPlate(self, cv_image):
         self.__normalize_img(cv_image)
 
 
-#         grayframe = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
-#         height, width = grayframe.shape
-#         cv_image_crop = cv_image[int(height/3):height, 30:width/2]
-#
-#         img = cv2.imread( '/home/alexkneifel/Downloads/ThreshPlate.png', cv2.IMREAD_GRAYSCALE)
-#             # cv2.imshow("image", img)
-#         blurred_feed = cv2.medianBlur(cv_image_crop, 5)
-#
-#     # Convert BGR to HSV
-#         hsv = cv2.cvtColor(blurred_feed, cv2.COLOR_BGR2HSV)
-#         homography = None
-#
-#         uh = 0 #157
-#         us = 2#8
-#         uv = 215#168
-#         lh = 0#0
-#         ls = 0#0
-#         lv = 100#87
-#         lower_hsv = np.array([lh, ls, lv])
-#         upper_hsv = np.array([uh, us, uv])
-#
-#         mask = cv2.inRange(hsv, lower_hsv, upper_hsv)
-#
-#     #homography
-#
-#         sift = cv2.xfeatures2d.SIFT_create()
-#         kp_image, desc_image = sift.detectAndCompute(img, None)
-#
-#         index_params = dict(algorithm=0, trees=5)
-#         search_params = dict()
-#         flann = cv2.FlannBasedMatcher(index_params, search_params)
-#
-#         kp_grayframe, desc_grayframe = sift.detectAndCompute(mask, None)
-#         matches = flann.knnMatch(desc_image, desc_grayframe, k=2)
-#
-#         good_points = []
-#         for m, n in matches:
-#             if m.distance < 0.6 * n.distance:
-#                 good_points.append(m)
-#
-#         img3 = cv2.drawMatches(img, kp_image, mask, kp_grayframe, good_points, mask)
-#
-#         cv2.imshow("matches of keypoints", img3)
-#         cv2.waitKey(1)
-#
-#
-#         if len(good_points) > 10:
-#             query_pts = np.float32([kp_image[m.queryIdx].pt for m in good_points]).reshape(-1, 1, 2)
-#             train_pts = np.float32([kp_grayframe[m.trainIdx].pt for m in good_points]).reshape(-1, 1, 2)
-#
-#             matrix, mask2 = cv2.findHomography(query_pts, train_pts, cv2.RANSAC, 5.0)
-#             matches_mask = mask2.ravel().tolist()
-#
-#             h, w = img.shape
-#             pts = np.float32([[0, 0], [0, h], [w, h], [w, 0]]).reshape(-1, 1, 2)
-#             dst = cv2.perspectiveTransform(pts, matrix)
-#
-#             if self.isMyRectangle(dst):
-#                 homography = cv2.polylines(cv_image_crop, [np.int32(dst)], True, (255, 0, 0), 3)
-#                 cv2.imshow("homography", homography)
-#                 cv2.waitKey(1)
-#                 license_plate_crop = cv_image_crop[int(dst[0][0][1]): int(dst[1][0][1]), int(dst[0][0][0]):int(dst[3][0][0])]
-#                 cv2.imshow("license plate", license_plate_crop)
-#                 cv2.waitKey(1)
+    #     grayframe = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+    #     height, width = grayframe.shape
+    #     cv_image_crop = cv_image[int(height/3):height, 30:width/2]
+    #
+    #     img = cv2.imread( '/home/alexkneifel/Downloads/ThreshPlate.png', cv2.IMREAD_GRAYSCALE)
+    #         # cv2.imshow("image", img)
+    #     blurred_feed = cv2.medianBlur(cv_image_crop, 5)
+    #
+    # # Convert BGR to HSV
+    #     hsv = cv2.cvtColor(blurred_feed, cv2.COLOR_BGR2HSV)
+    #     homography = None
+    #
+    #     uh = 0 #157
+    #     us = 2#8
+    #     uv = 215#168
+    #     lh = 0#0
+    #     ls = 0#0
+    #     lv = 100#87
+    #     lower_hsv = np.array([lh, ls, lv])
+    #     upper_hsv = np.array([uh, us, uv])
+    #
+    #     mask = cv2.inRange(hsv, lower_hsv, upper_hsv)
+    #
+    # #homography
+    #
+    #     sift = cv2.xfeatures2d.SIFT_create()
+    #     kp_image, desc_image = sift.detectAndCompute(img, None)
+    #
+    #     index_params = dict(algorithm=0, trees=5)
+    #     search_params = dict()
+    #     flann = cv2.FlannBasedMatcher(index_params, search_params)
+    #
+    #     kp_grayframe, desc_grayframe = sift.detectAndCompute(mask, None)
+    #     matches = flann.knnMatch(desc_image, desc_grayframe, k=2)
+    #
+    #     good_points = []
+    #     for m, n in matches:
+    #         if m.distance < 0.6 * n.distance:
+    #             good_points.append(m)
+    #
+    #     img3 = cv2.drawMatches(img, kp_image, mask, kp_grayframe, good_points, mask)
+    #
+    #     cv2.imshow("matches of keypoints", img3)
+    #     cv2.waitKey(1)
+    #
+    #
+    #     if len(good_points) > 10:
+    #         query_pts = np.float32([kp_image[m.queryIdx].pt for m in good_points]).reshape(-1, 1, 2)
+    #         train_pts = np.float32([kp_grayframe[m.trainIdx].pt for m in good_points]).reshape(-1, 1, 2)
+    #
+    #         matrix, mask2 = cv2.findHomography(query_pts, train_pts, cv2.RANSAC, 5.0)
+    #         matches_mask = mask2.ravel().tolist()
+    #
+    #         h, w = img.shape
+    #         pts = np.float32([[0, 0], [0, h], [w, h], [w, 0]]).reshape(-1, 1, 2)
+    #         dst = cv2.perspectiveTransform(pts, matrix)
+    #
+    #         if self.isMyRectangle(dst):
+    #             homography = cv2.polylines(cv_image_crop, [np.int32(dst)], True, (255, 0, 0), 3)
+    #             cv2.imshow("homography", homography)
+    #             cv2.waitKey(1)
+    #             license_plate_crop = cv_image_crop[int(dst[0][0][1]): int(dst[1][0][1]), int(dst[0][0][0]):int(dst[3][0][0])]
+    #             cv2.imshow("license plate", license_plate_crop)
+    #             cv2.waitKey(1)
 
 
 
