@@ -46,48 +46,31 @@ class ProcessPlate:
         # cv.imshow("not normalized", img)
         # blur = cv.medianBlur(img, 5)
         # # cv.waitKey(1)
-        img = cv.imread('/home/alexkneifel/Pictures/nml_P6.png', cv.IMREAD_COLOR)
+        #img = cv.imread('/home/alexkneifel/Pictures/nml_P6.png', cv.IMREAD_COLOR)
 
         hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)  # Convert to hsv color system
         h, s, v = cv.split(hsv)
-        avg_s  = np.mean(s)
-        avg_v = np.mean(v)
-        result = cv.equalizeHist(v)
-        result2 = cv.equalizeHist(s)
-        # if np.max(result) > self.max_v:
-        #     self.max_v = np.max(result)
-        # if np.max(result2) > self.max_s:
-        #     self.max_s = np.max(result2)
-        # average v is same everywhere in the world
-        print("avg v " + str(avg_s))
-        # avg s changes though
-        print("avg s " + str(avg_v))
-        print("eql avg v " + str(np.mean(result)))
-        # avg s changes though
-        print("eql avg s " + str(np.mean(result2)))
+        # avg_s  = np.mean(s)
+        # avg_v = np.mean(v)
+        # result = cv.equalizeHist(v)
+        # result2 = cv.equalizeHist(s)
 
-        plt.figure(figsize=(8,6))
-        plt.hist(v.ravel(), 256, [0, 256], alpha = 0.5, label ="V P1")
-        plt.hist(s.ravel(), 256, [0, 256], alpha = 0.5, label ="S P1")
-        plt.hist(result.ravel(), 256, [0, 256], alpha = 0.5, label= "Eql V")
-        plt.hist(result2.ravel(), 256, [0, 256], alpha = 0.5, label= "Eql S")
-        plt.title('P6')
-        plt.legend(loc = 'upper right')
-        plt.show()
-        # plt.hist(result.ravel(), 256, [0, 256]);
-        # plt.title('Equalize V')
-        # plt.show()
-        # plt.hist(result2.ravel(), 256, [0, 256]);
-        # plt.title('Equalize S')
-        # plt.show()
+        v_array = np.array(v)
+        s_array = np.array(s)
+        v_norm = v_array - int(np.mean(v_array))
+        s_norm = s_array - int(np.mean(s_array))
 
-        # hsv = cv.merge((h, result2, result))
-        # rgb = cv.cvtColor(hsv, cv.COLOR_HSV2BGR)
+        result_v = cv.equalizeHist(v_norm)
+        result_s = cv.equalizeHist(s_norm)
+
+
+        hsv = cv.merge((h, result_s, result_v))
+        rgb = cv.cvtColor(hsv, cv.COLOR_HSV2BGR)
 
         # #
-        #blur = cv.medianBlur(rgb,5)
-        # cv.imshow("normalized s and v", rgb)
-        # cv.waitKey(1)
+        blur = cv.medianBlur(rgb,5)
+        cv.imshow("normalized s and v", blur)
+        cv.waitKey(1)
         # hsv = cv.cvtColor(blur, cv.COLOR_BGR2HSV)
         # homography = None
         #
