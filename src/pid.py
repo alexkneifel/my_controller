@@ -81,8 +81,8 @@ class PidCtrl:
             index += 1
 
 
-        cv.imshow("hsv", mask)
-        cv.waitKey(1)
+        # cv.imshow("hsv", mask)
+        # cv.waitKey(1)
 
         # max_count = np.amax(count)
         # print("COUNT " + str(count))

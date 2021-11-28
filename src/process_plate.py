@@ -43,53 +43,92 @@ class ProcessPlate:
 #
 # # perhaps could
     def __normalize_img(self, img):
-        # cv.imshow("not normalized", img)
-        # blur = cv.medianBlur(img, 5)
-        # # cv.waitKey(1)
-        #img = cv.imread('/home/alexkneifel/Pictures/nml_P6.png', cv.IMREAD_COLOR)
+        max_area = 0
 
-        hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)  # Convert to hsv color system
+        cv.imshow("original image ", img)
+        cv.waitKey(1)
+
+        rx = 400.0 / img.shape[1]
+        dim = (400, int(img.shape[0] * rx))
+        # perform the actual resizing of the image
+        resized_img = cv.resize(img, dim, interpolation=cv.INTER_AREA)
+        height, width, channels = resized_img.shape
+        print("height of small " +str(height))
+        print("original height " + str(img.shape[0]))
+        ry = height / float(img.shape[0])
+        cv_image_crop = resized_img[int(height/2):height, 0:width]
+
+        hsv = cv.cvtColor(cv_image_crop, cv.COLOR_BGR2HSV)  # Convert to hsv color system
         h, s, v = cv.split(hsv)
-        # avg_s  = np.mean(s)
-        # avg_v = np.mean(v)
-        # result = cv.equalizeHist(v)
-        # result2 = cv.equalizeHist(s)
-
-        v_array = np.array(v)
-        s_array = np.array(s)
-        v_norm = v_array - int(np.mean(v_array))
-        s_norm = s_array - int(np.mean(s_array))
-
-        result_v = cv.equalizeHist(v_norm)
-        result_s = cv.equalizeHist(s_norm)
-
-
+        result_v = cv.equalizeHist(v)
+        result_s = cv.equalizeHist(s)
+        #
         hsv = cv.merge((h, result_s, result_v))
         rgb = cv.cvtColor(hsv, cv.COLOR_HSV2BGR)
-
-        # #
+        #
+        # # #
+        # could also try a different blur
+        # cv2.GaussianBlur(gray, (5, 5), 0)
         blur = cv.medianBlur(rgb,5)
-        cv.imshow("normalized s and v", blur)
-        cv.waitKey(1)
-        # hsv = cv.cvtColor(blur, cv.COLOR_BGR2HSV)
-        # homography = None
-        #
-        # uh = 23 #157
-        # us = 255#8
-        # uv = 215#168
-        # lh = 1#0
-        # ls = 0#0
-        # lv = 0#87
-        # lower_hsv = np.array([lh, ls, lv])
-        # upper_hsv = np.array([uh, us, uv])
-        #
-        # mask = cv.inRange(hsv, lower_hsv, upper_hsv)
-        #kernel = np.ones((5,5), np.uint8)
-        # img_dilation = cv.dilate(mask, kernel, iterations=1)
-        # #img_erosion = cv.erode(img_dilation, kernel, iterations=1)
-        #
-        # cv.imshow('Dilation', img_dilation)
+        # cv.imshow("normalized s and v", blur)
         # cv.waitKey(1)
+        hsv = cv.cvtColor(blur, cv.COLOR_BGR2HSV)
+        # homography = None
+
+        uh = 23 #157
+        us = 255#8
+        uv = 255#168
+        lh = 1#0
+        ls = 0#0
+        lv = 0#87
+        lower_hsv = np.array([lh, ls, lv])
+        upper_hsv = np.array([uh, us, uv])
+
+        mask = cv.inRange(hsv, lower_hsv, upper_hsv)
+        #kernel2 = np.ones((2, 2), np.uint8)
+        kernel1 = np.ones((3,3), np.uint8)
+        # could increase # iterations or kernel size. could do two iterations of each
+        #img_erosion = cv.erode(mask, kernel2, iterations=1)
+        img_dilation = cv.dilate(mask, kernel1, iterations=2)
+
+        #
+        contours = cv.findContours(img_dilation, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+        contours = contours[0] if len(contours) == 2 else contours[1]
+        # area_thresh = 0
+        result = resized_img.copy()
+        for c in contours:
+            area = cv.contourArea(c)
+            #print("contour" + str(c))
+            if area > max_area:
+                max_c = c
+                max_area = area
+                #print("max area"+ str(max_area))
+                # need to get the points from the contour and check if it is a rectangle w my function
+                # need to make sure I don't get the blob up top, could check if perimeter is closed
+
+        leftmost = tuple(max_c[max_c[:, :, 0].argmin()][0])
+        rightmost = tuple(max_c[max_c[:, :, 0].argmax()][0])
+        top = tuple(max_c[max_c[:, :, 1].argmin()][0])
+        bot = tuple(max_c[max_c[:, :, 1].argmax()][0])
+        small_leftp = int(leftmost[0])
+        small_rightp = int(rightmost[0])
+        small_topp = int(top[1])
+        small_botp = int(bot[1])
+
+        leftp =  int(small_leftp/rx)
+        rightp = int(small_rightp / rx)
+        botp = int(small_botp / ry) + int(img.shape[0]/2)
+        topp = int(small_topp / ry) + int(img.shape[0]/2)
+        license_plate_crop = img[topp:botp,leftp:rightp]
+
+
+        # should stop the car from moving if it detects a rectangle of right area
+        #license_plate_crop = cv_image_crop[int(top[1]): int(bot[1]), int(leftmost[0]):int(rightmost[0])]
+        cv.imshow("license plate", license_plate_crop)
+        cv.waitKey(1)
+
+
+        cv.drawContours(result, [max_c], -1, (0, 0, 255), 1)
 
 
 
