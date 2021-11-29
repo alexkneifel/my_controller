@@ -88,12 +88,12 @@ class ControlLoop:
             #         self.moveBot.moveForward(0, 2.5)
                 print("hi")
             else:
-                #fwdVal, turnVal = self.pid.nextMove(cv_image)
-                #self.moveBot.moveForward(fwdVal, turnVal)
-                #if self.count % 5 ==0:
+                # if last state was turning dont process plate
                 self.processPlate.proccessPlate(cv_image)
-                #self.moveBot.moveForward(fwdVal, turnVal)
-                #self.count += 1
+                # if process plate returns a plate, send moveForward (0,0) and call neural network script
+                # fwdVal, turnVal = self.pid.nextMove(cv_image)
+                # self.moveBot.moveForward(fwdVal, turnVal)
+                # if self.count % 5 ==0:
 
 
 control_loop = ControlLoop()

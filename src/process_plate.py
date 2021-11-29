@@ -38,7 +38,6 @@ class ProcessPlate:
 # # perhaps could
     def __normalize_img(self, img):
         max_area = 0
-        foundPlate = False
         max_c = None
 
         cv.imshow("original image ", img)
@@ -50,7 +49,7 @@ class ProcessPlate:
         resized_img = cv.resize(img, dim, interpolation=cv.INTER_AREA)
         height, width, channels = resized_img.shape
         ry = height / float(img.shape[0])
-        # crop this 25 pixels lower, would be easier if
+        # need to crop RHS of screen
         cv_image_crop = resized_img[int(height/1.7):height, 0:width]
 
         hsv = cv.cvtColor(cv_image_crop, cv.COLOR_BGR2HSV)  # Convert to hsv color system
@@ -90,57 +89,52 @@ class ProcessPlate:
         # if dilation is above certain threshold then do the rest of this
         cv.imshow("Dilation", img_dilation)
         cv.waitKey(1)
-        print(sum(sum(img_dilation)))
+        dilation_sum = sum(sum(img_dilation))
+        print(dilation_sum)
 
+        # and robot is not turning
+        if dilation_sum > 13000:
+            contours = cv.findContours(img_dilation, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+            contours = contours[0] if len(contours) == 2 else contours[1]
+            # area_thresh = 0
+            result = resized_img.copy()
+            for c in contours:
+                area = cv.contourArea(c)
+                #print("contour" + str(c))
+                if area > max_area:
+                    max_c = c
+                    max_area = area
+                    #print("max area"+ str(max_area))
+                    # need to get the points from the contour and check if it is a rectangle w my function
+                    # need to make sure I don't get the blob up top, could check if perimeter is closed
 
-        contours = cv.findContours(img_dilation, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-        contours = contours[0] if len(contours) == 2 else contours[1]
-        # area_thresh = 0
-        result = resized_img.copy()
-        for c in contours:
-            area = cv.contourArea(c)
-            #print("contour" + str(c))
-            if area > max_area:
-                max_c = c
-                max_area = area
-                #print("max area"+ str(max_area))
-                # need to get the points from the contour and check if it is a rectangle w my function
-                # need to make sure I don't get the blob up top, could check if perimeter is closed
+    # local variable max_c reference before assignment
+            if max_c is not None:
+                leftmost = tuple(max_c[max_c[:, :, 0].argmin()][0])
+                rightmost = tuple(max_c[max_c[:, :, 0].argmax()][0])
+                top = tuple(max_c[max_c[:, :, 1].argmin()][0])
+                bot = tuple(max_c[max_c[:, :, 1].argmax()][0])
+                # i want width in a certain ratio to height
+                small_leftp = int(leftmost[0])
+                small_rightp = int(rightmost[0])
+                small_topp = int(top[1])
+                small_botp = int(bot[1])
 
-# local variable max_c reference before assignment
-        if max_c is not None:
-            leftmost = tuple(max_c[max_c[:, :, 0].argmin()][0])
-            rightmost = tuple(max_c[max_c[:, :, 0].argmax()][0])
-            top = tuple(max_c[max_c[:, :, 1].argmin()][0])
-            bot = tuple(max_c[max_c[:, :, 1].argmax()][0])
-            # i want width in a certain ratio to height
-            small_leftp = int(leftmost[0])
-            small_rightp = int(rightmost[0])
-            small_topp = int(top[1])
-            small_botp = int(bot[1])
+                test_crop = cv_image_crop[small_topp:small_botp, small_leftp:small_rightp]
 
-            test_crop = cv_image_crop[small_topp:small_botp, small_leftp:small_rightp]
-
-            cv.imshow("small plate", test_crop)
-            cv.waitKey(1)
-
-            if self.isLicensePlate(test_crop, small_leftp, small_rightp, small_topp, small_botp):
-                leftp = int(small_leftp/rx)
-                rightp = int(small_rightp / rx)
-                botp = int(small_botp / ry) + int(img.shape[0]/1.7)
-                topp = int(small_topp / ry) + int(img.shape[0]/1.7)
-                license_plate_crop = img[topp:botp,leftp:rightp]
-                cv.imshow("license plate", license_plate_crop)
+                cv.imshow("small plate", test_crop)
                 cv.waitKey(1)
-                foundPlate = True
 
+                if self.isLicensePlate(test_crop, small_leftp, small_rightp, small_topp, small_botp):
+                    leftp = int(small_leftp/rx)
+                    rightp = int(small_rightp / rx)
+                    botp = int(small_botp / ry) + int(img.shape[0]/1.7)
+                    topp = int(small_topp / ry) + int(img.shape[0]/1.7)
+                    license_plate_crop = img[topp:botp,leftp:rightp]
+                    cv.imshow("license plate", license_plate_crop)
+                    cv.waitKey(1)
+                    return license_plate_crop
 
-        # should stop the car from moving if it detects a rectangle of right area
-        #license_plate_crop = cv_image_crop[int(top[1]): int(bot[1]), int(leftmost[0]):int(rightmost[0])]
-
-
-
-        #cv.drawContours(result, [max_c], -1, (0, 0, 255), 1)
 
 
 
