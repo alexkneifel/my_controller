@@ -70,16 +70,16 @@ class ControlLoop:
         listen = rospy.Subscriber('/R1/pi_camera/image_raw', Image, self.__callback)
         rospy.spin()
 
-        return True
-
     def __callback(self, data):
         cv_image = bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
-
         currentTime = self.clock.getTime()
-        if currentTime - self.startTime > 10 and self.stopped is not True:
+
+        if currentTime - self.startTime > 239 and self.stopped is not True:
             self.moveBot.moveForward(0,0)
             self.timer.endTimer()
             self.stopped = True
+        elif self.stopped is True:
+            self.moveBot.moveForward(0, 0)
         else:
             if currentTime - self.startTime < 1.5:
             #     if currentTime - self.startTime < 1:
@@ -88,12 +88,14 @@ class ControlLoop:
             #         self.moveBot.moveForward(0, 2.5)
                 print("hi")
             else:
-                # if last state was turning dont process plate
+                # if last state was turning or current is turning dont process plate, lastState =1 is turn, lastState = 0 is straight
+                # need to return plate, and a boolean for whether plate is new or old for if it is at crosswalk and guy is in the road
                 self.processPlate.proccessPlate(cv_image)
                 # if process plate returns a plate, send moveForward (0,0) and call neural network script
-                # fwdVal, turnVal = self.pid.nextMove(cv_image)
-                # self.moveBot.moveForward(fwdVal, turnVal)
-                # if self.count % 5 ==0:
+                #neuralnet(PID)
+                # otherwise call PID
+                #fwdVal, turnVal, lastState = self.pid.nextMove(cv_image)
+                #self.moveBot.moveForward(fwdVal, turnVal)
 
 
 control_loop = ControlLoop()

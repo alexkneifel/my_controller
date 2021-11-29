@@ -15,7 +15,7 @@ from cv_bridge import CvBridge, CvBridgeError
 import matplotlib.pyplot as plt
 import imutils
 
-# let 1 be a corner turn, 0 be straight
+# let states be, 1 be a corner turn, 0 be straight
 
 class PidCtrl:
     def __init__(self):
@@ -24,7 +24,6 @@ class PidCtrl:
         self.lastTurnSpeed = 0
         pass
 
-    # need to finish these two functions and make sure they work
     def __countFrontZeros(self, array):
         front_zeros=0
         for val in array:
@@ -47,8 +46,6 @@ class PidCtrl:
         min_index = 5
         grayframe = cv.cvtColor(cv_image, cv.COLOR_BGR2GRAY)
 
-
-
         ten_images = []
         count = [0] * 10
         index = 0
@@ -56,7 +53,6 @@ class PidCtrl:
         img = cv_image
         img = cv.medianBlur(img, 5)
 
-        # Convert BGR to HSV
         hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
 
         uh = 100
@@ -80,27 +76,15 @@ class PidCtrl:
             count[index] = sum(sum(image))
             index += 1
 
-
-        # cv.imshow("hsv", mask)
-        # cv.waitKey(1)
-
-        # max_count = np.amax(count)
-        # print("COUNT " + str(count))
-        # max_index = np.argmax(count)
-        # print("MAX INDEX " + str(max_index))
-        # num_nonzero = np.count_nonzero(count)
-        # print("NUM NONZERO" + str(num_nonzero))
-
         sizeCount = len(count)
         short_count = np.trim_zeros(count)
         frontZeros = len(self.__countFrontZeros(count))
         if len(short_count) > 0 :
             min_index = np.argmin(short_count) + frontZeros
         backZeros = self.__countBackZeros(sizeCount,len(short_count),frontZeros)
-        #print("count " + str(count))
 
+        # corner turn, if RHS of screen is black turn, or if last state was turning turn,
         if frontZeros ==0 and backZeros > 1 or self.lastState ==1:
-            #could be while still have 0's turn but hard if this isnt sending command
             if min_index == 4 or min_index == 5:
                 fwdSpeed = 0.3
                 turnSpeed = -0.05
@@ -110,9 +94,12 @@ class PidCtrl:
                 turnSpeed = 3
                 self.lastState = 1
 
-
+# if not turning, do normal PID for straight road adjustments
         else:
+            # maybe could not take abs then wouldn't have to use backZeros!! to check if left or right turn
             difference = abs(self.desiredVal - self.__computeAverage(count[6],count[7],count[8]))
+
+            # for crosswalk to not be swerving
             if count[6] and count[7] < 26000:
                 left_p = 0.00005
                 right_p = 0.00005
@@ -120,7 +107,6 @@ class PidCtrl:
                 left_p = 0.0003
                 right_p = 0.0003
             fwdSpeed = 0.33
-            # this forces it to be awfully on the line on the right , maybe say if most right hand one is below a certain val?
             if backZeros > 0:
                 turnSpeed = difference*left_p
                 if turnSpeed > 3:
@@ -131,9 +117,6 @@ class PidCtrl:
                     turnSpeed = -3
             self.lastState = 0
 
-
-
         self.lastTurnSpeed = turnSpeed
-        # print("forward: " + str(fwdSpeed))
-        # print("turn: " + str(turnSpeed))
-        return fwdSpeed,turnSpeed
+
+        return fwdSpeed,turnSpeed, self.lastState
