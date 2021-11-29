@@ -55,7 +55,6 @@ class ControlLoop:
 
     def __init__(self):
         self.bridge = CvBridge()
-        self.timeout = 0
         self.clock = gazeboClock()
         self.timer = ControlTimer()
         self.timer.startTimer()
@@ -64,7 +63,7 @@ class ControlLoop:
         self.moveBot = moveBot()
         self.pid = pid.PidCtrl()
         self.processPlate = process_plate.ProcessPlate()
-        self.count = 0
+        self.lastState = 0
 
     def start_control(self):
         listen = rospy.Subscriber('/R1/pi_camera/image_raw', Image, self.__callback)
@@ -82,21 +81,39 @@ class ControlLoop:
             self.moveBot.moveForward(0, 0)
         else:
             if currentTime - self.startTime < 1.5:
-            #     if currentTime - self.startTime < 1:
-            #         self.moveBot.moveForward(0.35, 0.08)
-            #     else:
-            #         self.moveBot.moveForward(0, 2.5)
+                if currentTime - self.startTime < 1:
+                    self.moveBot.moveForward(0.35, 0)
+                else:
+                    self.moveBot.moveForward(0, 2.6)
+                self.lastState = 1
                 print("hi")
             else:
-                # TODO if last state was turning or current is turning dont process plate, lastState =1 is turn, lastState = 0 is straight
-                # need to return plate, and a boolean for whether plate is new or old for if it is at crosswalk and guy is in the road
-                plate, canMove = self.processPlate.proccessPlate(cv_image)
-                # if plate is not none, PID(0,0) and run neural net
-                #neuralnet(PID)
-                # if process plate returns None,False then man is in our way dont move
-                # if process plate returns None, True then we are free to move forwards
-                #fwdVal, turnVal, lastState = self.pid.nextMove(cv_image)
-                #self.moveBot.moveForward(fwdVal, turnVal)
+                # if last state was not turning then attempt to process plate
+                if self.lastState ==0:
+                    # get the potential plate, and whether we should move forward
+                    plate, canMove = self.processPlate.proccessPlate(cv_image)
+                # if a plate is returned, stop moving and send this plate to the neural net
+                    if plate is not None:
+                        #TODO code either got stuck here
+                        self.moveBot.moveForward(0,0)
+                        time.sleep(0.5)
+                        #string = neuralnet(plate)
+                        #pub2.publish(string)
+                    # if plate is None and we can't move, means man is in our frame, so dont move
+                    #, this will loop so will check, if we can move in the next instant
+                    # however this doesnt cover the case where we are in the crosswalk and the man runs into our side
+                    elif canMove is False:
+                        # TODO or here
+                        self.moveBot.moveForward(0, 0)
+                    # if we have no plate, but there is no man in the road, run PID like normal
+                    elif canMove is True:
+                        fwdVal, turnVal, self.lastState = self.pid.nextMove(cv_image)
+                        self.moveBot.moveForward(fwdVal, turnVal)
+
+                # if last state was turning, dont do anything but PID
+                else:
+                    fwdVal, turnVal, self.lastState = self.pid.nextMove(cv_image)
+                    self.moveBot.moveForward(fwdVal, turnVal)
 
 
 control_loop = ControlLoop()

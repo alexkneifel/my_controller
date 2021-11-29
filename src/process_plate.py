@@ -18,11 +18,7 @@ import imutils
 class ProcessPlate:
 
     def __init__(self):
-        self.s = None
-        self.v = None
-        self.setVal = False
-        self.max_s = 0
-        self.max_v = 0
+        self.plate_search = True
 
     def isLicensePlate(self, crop, left, right, top , bottom):
         small_width = right - left
@@ -46,9 +42,6 @@ class ProcessPlate:
         height, width, channels = resized_img.shape
         ry = height / float(img.shape[0])
 
-        # TODO
-        # after return a plate to neural net, need to make sure dilation sum goes back to 0 before processing plates again
-        # need a reset boolean
         cv_image_crop = resized_img[int(height/1.7):height, 0:width/2]
 
         hsv = cv.cvtColor(cv_image_crop, cv.COLOR_BGR2HSV)
@@ -86,50 +79,54 @@ class ProcessPlate:
         dilation_sum = sum(sum(img_dilation))
         print(dilation_sum)
 
+# reset to search for plates once we are past the parked vehicle
+        if dilation_sum == 0:
+            self.plate_search = True
+
         # if dilation is above certain threshold then do the rest of this
-        if dilation_sum > 13000:
-            contours = cv.findContours(img_dilation, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-            contours = contours[0] if len(contours) == 2 else contours[1]
-            for c in contours:
-                area = cv.contourArea(c)
-                if area > max_area:
-                    max_c = c
-                    max_area = area
+        if self.plate_search == True:
+            if dilation_sum > 12000:
+                contours = cv.findContours(img_dilation, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+                contours = contours[0] if len(contours) == 2 else contours[1]
+                for c in contours:
+                    area = cv.contourArea(c)
+                    if area > max_area:
+                        max_c = c
+                        max_area = area
 
-            if max_c is not None:
-                leftmost = tuple(max_c[max_c[:, :, 0].argmin()][0])
-                rightmost = tuple(max_c[max_c[:, :, 0].argmax()][0])
-                top = tuple(max_c[max_c[:, :, 1].argmin()][0])
-                bot = tuple(max_c[max_c[:, :, 1].argmax()][0])
-                small_leftp = int(leftmost[0])
-                small_rightp = int(rightmost[0])
-                small_topp = int(top[1])
-                small_botp = int(bot[1])
+                if max_c is not None:
+                    leftmost = tuple(max_c[max_c[:, :, 0].argmin()][0])
+                    rightmost = tuple(max_c[max_c[:, :, 0].argmax()][0])
+                    top = tuple(max_c[max_c[:, :, 1].argmin()][0])
+                    bot = tuple(max_c[max_c[:, :, 1].argmax()][0])
+                    small_leftp = int(leftmost[0])
+                    small_rightp = int(rightmost[0])
+                    small_topp = int(top[1])
+                    small_botp = int(bot[1])
 
-                test_crop = cv_image_crop[small_topp:small_botp, small_leftp:small_rightp]
+                    test_crop = cv_image_crop[small_topp:small_botp, small_leftp:small_rightp]
 
-                cv.imshow("small plate", test_crop)
-                cv.waitKey(1)
-
-                if self.isLicensePlate(test_crop, small_leftp, small_rightp, small_topp, small_botp):
-                    leftp = int(small_leftp/rx)
-                    rightp = int(small_rightp / rx)
-                    botp = int(small_botp / ry) + int(img.shape[0]/1.7)
-                    topp = int(small_topp / ry) + int(img.shape[0]/1.7)
-                    license_plate_crop = img[topp:botp,leftp:rightp]
-                    cv.imshow("license plate", license_plate_crop)
+                    cv.imshow("small plate", test_crop)
                     cv.waitKey(1)
-                    return license_plate_crop, True
-                else:
-                    # this would be if the man is in the middle of the road. no plate, but it was above threshold
-                    # if we have dilation sum above, but it is not a plate. then it is the man.
-                    # dont return a plate, but return False that we cant move forward
-                    return None, False
-        # if we dont have dilation sum above a certain value, then return no plate, but true that we can move forward
-        # not sure if this is necessarily true
-        else:
-            return None, True
 
+                    if self.isLicensePlate(test_crop, small_leftp, small_rightp, small_topp, small_botp):
+                        leftp = int(small_leftp/rx)
+                        rightp = int(small_rightp / rx)
+                        botp = int(small_botp / ry) + int(img.shape[0]/1.7)
+                        topp = int(small_topp / ry) + int(img.shape[0]/1.7)
+                        license_plate_crop = img[topp:botp,leftp:rightp]
+                        cv.imshow("license plate", license_plate_crop)
+                        cv.waitKey(1)
+                        self.plate_search = False
+                        return license_plate_crop, True
+                    else:
+                        # this would be if the man is in the middle of the road. no plate, but it was above threshold
+                        # if we have dilation sum above, but it is not a plate. then it is the man.
+                        # dont return a plate, but return False that we cant move forward
+                        return None, False
+            # if we dont have dilation sum above a certain value, then return no plate, but true that we can move forward
+            # not sure if this is necessarily true
+        return None, True
 
     def proccessPlate(self, cv_image):
         plate, canMove = self.__normalize_img(cv_image)

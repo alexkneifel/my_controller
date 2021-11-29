@@ -91,7 +91,7 @@ class PidCtrl:
         # corner turn, if RHS of screen is black turn, or if last state was turning turn,
         if frontZeros ==0 and backZeros > 1 or self.lastState ==1:
             if min_index == 4 or min_index == 5:
-                fwdSpeed = 0.3
+                fwdSpeed = 0.2
                 turnSpeed = -0.05
                 self.lastState = 0
             else:
@@ -112,7 +112,7 @@ class PidCtrl:
             else:
                 left_p = 0.0003
                 right_p = 0.0003
-            fwdSpeed = 0.33
+            fwdSpeed = 0.2
             if backZeros > 0:
                 turnSpeed = difference*left_p
                 if turnSpeed > 3:
