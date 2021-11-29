@@ -64,6 +64,7 @@ class ControlLoop:
         self.moveBot = moveBot()
         self.pid = pid.PidCtrl()
         self.processPlate = process_plate.ProcessPlate()
+        self.count = 0
 
     def start_control(self):
         listen = rospy.Subscriber('/R1/pi_camera/image_raw', Image, self.__callback)
@@ -81,15 +82,18 @@ class ControlLoop:
             self.stopped = True
         else:
             if currentTime - self.startTime < 1.5:
+            #     if currentTime - self.startTime < 1:
+            #         self.moveBot.moveForward(0.35, 0.08)
+            #     else:
+            #         self.moveBot.moveForward(0, 2.5)
                 print("hi")
-                if currentTime - self.startTime < 1:
-                    self.moveBot.moveForward(0.35, 0.08)
-                else:
-                    self.moveBot.moveForward(0, 3)
             else:
-                #self.processPlate.proccessPlate(cv_image)
-                fwdVal, turnVal = self.pid.nextMove(cv_image)
-                self.moveBot.moveForward(fwdVal, turnVal)
+                #fwdVal, turnVal = self.pid.nextMove(cv_image)
+                #self.moveBot.moveForward(fwdVal, turnVal)
+                #if self.count % 5 ==0:
+                self.processPlate.proccessPlate(cv_image)
+                #self.moveBot.moveForward(fwdVal, turnVal)
+                #self.count += 1
 
 
 control_loop = ControlLoop()
