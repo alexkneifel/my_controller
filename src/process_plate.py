@@ -46,8 +46,10 @@ class ProcessPlate:
         height, width, channels = resized_img.shape
         ry = height / float(img.shape[0])
 
-        # need to crop RHS of screen
-        cv_image_crop = resized_img[int(height/1.7):height, 0:width]
+        # TODO
+        # after return a plate to neural net, need to make sure dilation sum goes back to 0 before processing plates again
+        # need a reset boolean
+        cv_image_crop = resized_img[int(height/1.7):height, 0:width/2]
 
         hsv = cv.cvtColor(cv_image_crop, cv.COLOR_BGR2HSV)
         h, s, v = cv.split(hsv)
@@ -120,9 +122,15 @@ class ProcessPlate:
                     return license_plate_crop, True
                 else:
                     # this would be if the man is in the middle of the road. no plate, but it was above threshold
-                    # if false then stop moving
+                    # if we have dilation sum above, but it is not a plate. then it is the man.
+                    # dont return a plate, but return False that we cant move forward
                     return None, False
+        # if we dont have dilation sum above a certain value, then return no plate, but true that we can move forward
+        # not sure if this is necessarily true
+        else:
+            return None, True
 
 
     def proccessPlate(self, cv_image):
-        self.__normalize_img(cv_image)
+        plate, canMove = self.__normalize_img(cv_image)
+        return plate, canMove

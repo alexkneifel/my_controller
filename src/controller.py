@@ -88,12 +88,13 @@ class ControlLoop:
             #         self.moveBot.moveForward(0, 2.5)
                 print("hi")
             else:
-                # if last state was turning or current is turning dont process plate, lastState =1 is turn, lastState = 0 is straight
+                # TODO if last state was turning or current is turning dont process plate, lastState =1 is turn, lastState = 0 is straight
                 # need to return plate, and a boolean for whether plate is new or old for if it is at crosswalk and guy is in the road
-                self.processPlate.proccessPlate(cv_image)
-                # if process plate returns a plate, send moveForward (0,0) and call neural network script
+                plate, canMove = self.processPlate.proccessPlate(cv_image)
+                # if plate is not none, PID(0,0) and run neural net
                 #neuralnet(PID)
-                # otherwise call PID
+                # if process plate returns None,False then man is in our way dont move
+                # if process plate returns None, True then we are free to move forwards
                 #fwdVal, turnVal, lastState = self.pid.nextMove(cv_image)
                 #self.moveBot.moveForward(fwdVal, turnVal)
 

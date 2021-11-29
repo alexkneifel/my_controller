@@ -40,6 +40,11 @@ class PidCtrl:
     def __computeAverage(self,section1,section2,section3):
         return (section1+section2+section3)/3
 
+#TODO
+# could recalculate value for rhs being where I want it
+# could process smaller image to make PID less intensive
+# could make right hand turns a part of original control instead of its own control
+# could not use there being 0's for turning and just use the P
     def nextMove(self, cv_image):
         fwdSpeed = 0.2
         turnSpeed = 0.1
@@ -103,6 +108,7 @@ class PidCtrl:
             if count[6] and count[7] < 26000:
                 left_p = 0.00005
                 right_p = 0.00005
+
             else:
                 left_p = 0.0003
                 right_p = 0.0003
