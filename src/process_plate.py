@@ -68,12 +68,13 @@ class ProcessPlate:
         upper_hsv = np.array([uh, us, uv])
 
         mask = cv.inRange(hsv, lower_hsv, upper_hsv)
-        kernel1 = np.ones((3,3), np.uint8)
+        kernel1 = np.ones((4,4), np.uint8)
+        #kernel2 = np.ones((1, 1), np.uint8)
         # could also do if hsv is above certain threshold then dilate to reduce processing
 
         # could increase # iterations or kernel size. could do two iterations of each
         #img_erosion = cv.erode(mask, kernel2, iterations=1)
-        img_dilation = cv.dilate(mask, kernel1, iterations=2)
+        img_dilation = cv.dilate(mask, kernel1, iterations=1)
         cv.imshow("Dilation", img_dilation)
         cv.waitKey(1)
         dilation_sum = sum(sum(img_dilation))
@@ -85,7 +86,7 @@ class ProcessPlate:
 
         # if dilation is above certain threshold then do the rest of this
         if self.plate_search == True:
-            if dilation_sum > 12000:
+            if dilation_sum > 12200:
                 contours = cv.findContours(img_dilation, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
                 contours = contours[0] if len(contours) == 2 else contours[1]
                 for c in contours:

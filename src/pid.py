@@ -22,7 +22,6 @@ class PidCtrl:
         self.lastState = 0
         self.desiredVal = 29600
         self.lastTurnSpeed = 0
-        pass
 
     def __countFrontZeros(self, array):
         front_zeros=0
@@ -91,8 +90,8 @@ class PidCtrl:
         # corner turn, if RHS of screen is black turn, or if last state was turning turn,
         if frontZeros ==0 and backZeros > 1 or self.lastState ==1:
             if min_index == 4 or min_index == 5:
-                fwdSpeed = 0.2
-                turnSpeed = -0.05
+                fwdSpeed = 0.15
+                turnSpeed = 0
                 self.lastState = 0
             else:
                 fwdSpeed = 0.1
@@ -112,7 +111,7 @@ class PidCtrl:
             else:
                 left_p = 0.0003
                 right_p = 0.0003
-            fwdSpeed = 0.2
+            fwdSpeed = 0.15
             if backZeros > 0:
                 turnSpeed = difference*left_p
                 if turnSpeed > 3:

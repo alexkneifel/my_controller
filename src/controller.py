@@ -17,7 +17,7 @@ import pid, process_plate
 
 bridge = CvBridge()
 
-rospy.init_node('publisher', anonymous=True)
+rospy.init_node('my_publisher', anonymous=True)
 pub2 = rospy.Publisher('/license_plate', String, queue_size=1)
 pub = rospy.Publisher('/R1/cmd_vel', Twist, queue_size=1)
 time.sleep(1)
@@ -39,7 +39,8 @@ class ControlTimer:
 
 class gazeboClock:
     def __init__(self):
-        self.clock =rospy.Subscriber('/clock', String)
+        #self.clock =rospy.Subscriber('/clock', String)
+        pass
     def getTime(self):
         return rospy.get_time()
 
@@ -64,6 +65,7 @@ class ControlLoop:
         self.pid = pid.PidCtrl()
         self.processPlate = process_plate.ProcessPlate()
         self.lastState = 0
+        self.count = 0
 
     def start_control(self):
         listen = rospy.Subscriber('/R1/pi_camera/image_raw', Image, self.__callback)
@@ -79,6 +81,10 @@ class ControlLoop:
             self.stopped = True
         elif self.stopped is True:
             self.moveBot.moveForward(0, 0)
+        elif self.count > 6:
+            self.moveBot.moveForward(0, 0)
+            self.timer.endTimer()
+            self.stopped = True
         else:
             if currentTime - self.startTime < 1.5:
                 if currentTime - self.startTime < 1:
@@ -91,20 +97,20 @@ class ControlLoop:
                 # if last state was not turning then attempt to process plate
                 if self.lastState ==0:
                     # get the potential plate, and whether we should move forward
-                    plate, canMove = self.processPlate.proccessPlate(cv_image)
+                    plate1, canMove = self.processPlate.proccessPlate(cv_image)
                 # if a plate is returned, stop moving and send this plate to the neural net
-                    if plate is not None:
-                        #TODO code either got stuck here
+                    if plate1 is not None:
                         self.moveBot.moveForward(0,0)
-                        time.sleep(0.5)
-                        #string = neuralnet(plate)
+                        time.sleep(2.5)
+                        plate2, canMove = self.processPlate.proccessPlate(cv_image)
+                        # this count should be based on different NN strings
+                        self.count += 1
+                        #if plate2 is not None:
+                            #string = neuralnet(plate2)
+                        #else:
+                            # string = neuralnet(plate1)
                         #pub2.publish(string)
-                    # if plate is None and we can't move, means man is in our frame, so dont move
-                    #, this will loop so will check, if we can move in the next instant
-                    # however this doesnt cover the case where we are in the crosswalk and the man runs into our side
-                    elif canMove is False:
-                        # TODO or here
-                        self.moveBot.moveForward(0, 0)
+
                     # if we have no plate, but there is no man in the road, run PID like normal
                     elif canMove is True:
                         fwdVal, turnVal, self.lastState = self.pid.nextMove(cv_image)
