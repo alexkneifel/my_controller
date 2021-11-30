@@ -13,7 +13,7 @@ import time
 from cv_bridge import CvBridge, CvBridgeError
 import matplotlib.pyplot as plt
 import imutils
-import pid, process_plate
+import pid, process_plate, neuralnet
 
 bridge = CvBridge()
 
@@ -66,6 +66,7 @@ class ControlLoop:
         self.processPlate = process_plate.ProcessPlate()
         self.lastState = 0
         self.count = 0
+        self.neuralnet = neuralnet.NeuralNet()
 
     def start_control(self):
         listen = rospy.Subscriber('/R1/pi_camera/image_raw', Image, self.__callback)
@@ -81,7 +82,7 @@ class ControlLoop:
             self.stopped = True
         elif self.stopped is True:
             self.moveBot.moveForward(0, 0)
-        elif self.count > 6:
+        elif self.count > 9:
             self.moveBot.moveForward(0, 0)
             self.timer.endTimer()
             self.stopped = True
@@ -90,11 +91,11 @@ class ControlLoop:
                 if currentTime - self.startTime < 1:
                     self.moveBot.moveForward(0.35, 0)
                 else:
-                    self.moveBot.moveForward(0, 2.6)
+                    self.moveBot.moveForward(0, 2.5)
                 self.lastState = 1
                 print("hi")
             else:
-                # if last state was not turning then attempt to process plate
+            #     # if last state was not turning then attempt to process plate
                 if self.lastState ==0:
                     # get the potential plate, and whether we should move forward
                     plate1, canMove = self.processPlate.proccessPlate(cv_image)
@@ -105,10 +106,34 @@ class ControlLoop:
                         plate2, canMove = self.processPlate.proccessPlate(cv_image)
                         # this count should be based on different NN strings
                         self.count += 1
-                        #if plate2 is not None:
-                            #string = neuralnet(plate2)
-                        #else:
-                            # string = neuralnet(plate1)
+                        if plate2 is not None:
+                            parking_string = self.neuralnet.licencePlateToString(plate2)
+                            pub2.publish(parking_string)
+                            #char1,char2,char3,char4 = self.neuralnet.plotter(plate2)
+                            # cv2.imshow("Char 1", char1)
+                            # cv2.waitKey(1)
+                            # cv2.imshow("Char 2", char2)
+                            # cv2.waitKey(1)
+                            # cv2.imshow("Char 3", char3)
+                            # cv2.waitKey(1)
+                            # cv2.imshow("Char 4", char4)
+                            # cv2.waitKey(1)
+                            print("plate 2")
+
+                        else:
+                            parking_string = self.neuralnet.licencePlateToString(plate1)
+                            pub2.publish(parking_string)
+                            #char1,char2,char3,char4 = self.neuralnet.plotter(plate1)
+                            # cv2.imshow("Char 1", char1)
+                            # cv2.waitKey(1)
+                            # cv2.imshow("Char 2", char2)
+                            # cv2.waitKey(1)
+                            # cv2.imshow("Char 3", char3)
+                            # cv2.waitKey(1)
+                            # cv2.imshow("Char 4", char4)
+                            # cv2.waitKey(1)
+                            print("plate 1")
+
                         #pub2.publish(string)
 
                     # if we have no plate, but there is no man in the road, run PID like normal

@@ -13,6 +13,8 @@ import time
 from cv_bridge import CvBridge, CvBridgeError
 import matplotlib.pyplot as plt
 import imutils
+import os
+
 
 
 class ProcessPlate:
@@ -33,8 +35,8 @@ class ProcessPlate:
         max_area = 0
         max_c = None
 
-        cv.imshow("original image ", img)
-        cv.waitKey(1)
+        # cv.imshow("original image ", img)
+        # cv.waitKey(1)
 
         rx = 400.0 / img.shape[1]
         dim = (400, int(img.shape[0] * rx))
@@ -42,7 +44,7 @@ class ProcessPlate:
         height, width, channels = resized_img.shape
         ry = height / float(img.shape[0])
 
-        cv_image_crop = resized_img[int(height/1.7):height, 0:width/2]
+        cv_image_crop = resized_img[int(height/1.55):height, 0:width/2]
 
         hsv = cv.cvtColor(cv_image_crop, cv.COLOR_BGR2HSV)
         h, s, v = cv.split(hsv)
@@ -75,10 +77,10 @@ class ProcessPlate:
         # could increase # iterations or kernel size. could do two iterations of each
         #img_erosion = cv.erode(mask, kernel2, iterations=1)
         img_dilation = cv.dilate(mask, kernel1, iterations=1)
-        cv.imshow("Dilation", img_dilation)
-        cv.waitKey(1)
+        # cv.imshow("Dilation", img_dilation)
+        # cv.waitKey(1)
         dilation_sum = sum(sum(img_dilation))
-        print(dilation_sum)
+        #print(dilation_sum)
 
 # reset to search for plates once we are past the parked vehicle
         if dilation_sum == 0:
@@ -86,7 +88,7 @@ class ProcessPlate:
 
         # if dilation is above certain threshold then do the rest of this
         if self.plate_search == True:
-            if dilation_sum > 12200:
+            if dilation_sum > 11900:
                 contours = cv.findContours(img_dilation, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
                 contours = contours[0] if len(contours) == 2 else contours[1]
                 for c in contours:
@@ -113,12 +115,15 @@ class ProcessPlate:
                     if self.isLicensePlate(test_crop, small_leftp, small_rightp, small_topp, small_botp):
                         leftp = int(small_leftp/rx)
                         rightp = int(small_rightp / rx)
-                        botp = int(small_botp / ry) + int(img.shape[0]/1.7)
-                        topp = int(small_topp / ry) + int(img.shape[0]/1.7)
+                        botp = int(small_botp / ry) + int(img.shape[0]/1.55)
+                        topp = int(small_topp / ry) + int(img.shape[0]/1.55)
                         license_plate_crop = img[topp:botp,leftp:rightp]
+                        # why isnt this photo showing up anymore
+                        # it shows
                         cv.imshow("license plate", license_plate_crop)
                         cv.waitKey(1)
                         self.plate_search = False
+
                         return license_plate_crop, True
                     else:
                         # this would be if the man is in the middle of the road. no plate, but it was above threshold
