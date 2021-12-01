@@ -23,6 +23,7 @@ class PidCtrl:
         self.desiredVal = 29600
         self.stopped = False
         self.already_stopped = False
+        self.no_ped_count = 0
 
     def __countFrontZeros(self, array):
         front_zeros=0
@@ -77,11 +78,18 @@ class PidCtrl:
             fwdSpeed = 0
             turnSpeed = 0
             self.lastState = 0
-            if self.already_stopped and dilation_sum < 100:
+            if self.already_stopped and self.no_ped_count > 75:
+                self.stopped = False
+                print("go")
+                self.no_ped_count = 0
+            elif self.already_stopped and dilation_sum < 200:
                 print("waiting")
+                self.no_ped_count +=1
+                print("no ped" + str(self.no_ped_count))
             else:
                 self.stopped = False
                 print("go")
+                self.no_ped_count = 0
 
         # if not waiting at crosswalk
         if self.stopped is False:
@@ -155,8 +163,8 @@ class PidCtrl:
                     fwdSpeed = 0.15
 
                 else:
-                    left_p = 0.0003
-                    right_p = 0.0003
+                    left_p = 0.00025
+                    right_p = 0.00025
                     fwdSpeed = 0.15
                     self.already_stopped = False
                 if backZeros > 0:

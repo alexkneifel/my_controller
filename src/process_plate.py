@@ -31,7 +31,7 @@ class ProcessPlate:
         else:
             return False
 
-    def __normalize_img(self, img):
+    def __normalize_img(self, img, string):
         max_area = 0
         max_c = None
 
@@ -66,7 +66,7 @@ class ProcessPlate:
         upper_hsv = np.array([uh, us, uv])
 
         mask = cv.inRange(hsv, lower_hsv, upper_hsv)
-        kernel1 = np.ones((4,4), np.uint8)
+        kernel1 = np.ones((3,3), np.uint8)
         #kernel2 = np.ones((1, 1), np.uint8)
         # could also do if hsv is above certain threshold then dilate to reduce processing
 
@@ -84,7 +84,7 @@ class ProcessPlate:
 
         # if dilation is above certain threshold then do the rest of this
         if self.plate_search == True:
-            if dilation_sum > 11900:
+            if dilation_sum > 11500:
                 contours = cv.findContours(img_dilation, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
                 contours = contours[0] if len(contours) == 2 else contours[1]
                 for c in contours:
@@ -114,7 +114,7 @@ class ProcessPlate:
                         botp = int(small_botp / ry) + int(img.shape[0]/1.55)
                         topp = int(small_topp / ry) + int(img.shape[0]/1.55)
                         license_plate_crop = img[topp:botp,leftp:rightp]
-                        cv.imshow("license plate", license_plate_crop)
+                        cv.imshow(""+string, license_plate_crop)
                         cv.waitKey(1)
                         self.plate_search = False
                         return license_plate_crop, True
@@ -127,6 +127,6 @@ class ProcessPlate:
             # not sure if this is necessarily true
         return None, True
 
-    def proccessPlate(self, cv_image):
-        plate, canMove = self.__normalize_img(cv_image)
+    def proccessPlate(self, cv_image, string):
+        plate, canMove = self.__normalize_img(cv_image, string)
         return plate, canMove
