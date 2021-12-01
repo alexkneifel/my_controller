@@ -14,6 +14,8 @@ from cv_bridge import CvBridge, CvBridgeError
 import matplotlib.pyplot as plt
 import imutils
 import os
+import uuid
+
 
 
 
@@ -21,6 +23,7 @@ class ProcessPlate:
 
     def __init__(self):
         self.plate_search = True
+        self.last_val = 0
 
     def isLicensePlate(self, left, right, top , bottom):
         small_width = right - left
@@ -31,7 +34,7 @@ class ProcessPlate:
         else:
             return False
 
-    def __normalize_img(self, img, string):
+    def __normalize_img(self, img):
         max_area = 0
         max_c = None
 
@@ -114,8 +117,10 @@ class ProcessPlate:
                         botp = int(small_botp / ry) + int(img.shape[0]/1.55)
                         topp = int(small_topp / ry) + int(img.shape[0]/1.55)
                         license_plate_crop = img[topp:botp,leftp:rightp]
-                        cv.imshow(""+string, license_plate_crop)
+                        cv.imshow("plate", license_plate_crop)
                         cv.waitKey(1)
+                        os.chdir("/home/alexkneifel/LicensePlateData")
+                        cv.imwrite("plate" + str(uuid.uuid4()) +".jpg", license_plate_crop)
                         self.plate_search = False
                         return license_plate_crop, True
                     else:
@@ -127,6 +132,6 @@ class ProcessPlate:
             # not sure if this is necessarily true
         return None, True
 
-    def proccessPlate(self, cv_image, string):
-        plate, canMove = self.__normalize_img(cv_image, string)
+    def proccessPlate(self, cv_image):
+        plate, canMove = self.__normalize_img(cv_image)
         return plate, canMove

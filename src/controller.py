@@ -65,6 +65,7 @@ class ControlLoop:
         self.pid = pid.PidCtrl()
         self.processPlate = process_plate.ProcessPlate()
         self.neuralnet = neuralnet.NeuralNet()
+        self.count = 0
 
     def start_control(self):
         listen = rospy.Subscriber('/R1/pi_camera/image_raw', Image, self.__callback)
@@ -73,7 +74,11 @@ class ControlLoop:
     def __callback(self, data):
         cv_image = bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
         currentTime = self.clock.getTime()
-
+        if self.count ==6:
+            self.moveBot.moveForward(0, 0)
+            self.timer.endTimer()
+            self.stopped = True
+            print("done")
         if currentTime - self.startTime > 230 and self.stopped is not True:
             self.moveBot.moveForward(0,0)
             self.timer.endTimer()
@@ -85,19 +90,20 @@ class ControlLoop:
                 if currentTime - self.startTime < 1:
                     self.moveBot.moveForward(0.35, 0)
                 else:
-                    self.moveBot.moveForward(0, 2.5)
+                    self.moveBot.moveForward(0, 2.22)
                 self.lastState = 1
                 print("hi")
             else:
             #     # if last state was not turning then attempt to process plate
                 if self.lastState ==0:
                     # get the potential plate, and whether we should move forward
-                    plate1, canMove = self.processPlate.proccessPlate(cv_image, "plate1")
+                    plate1, canMove = self.processPlate.proccessPlate(cv_image)
                 # if a plate is returned, stop moving and send this plate to the neural net
                     if plate1 is not None:
                         self.moveBot.moveForward(0,0)
                         time.sleep(2)
                         print("plate 1 to NN")
+                        self.count += 1
                         #message = self.neuralnet.licencePlateToString(plate1)
                         #pub2.publish(message)
 

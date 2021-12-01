@@ -72,9 +72,9 @@ class PidCtrl:
             kernel1 = np.ones((4, 4), np.uint8)
             img_dilation = cv.dilate(mask, kernel1, iterations=1)
             dilation_sum = sum(sum(img_dilation))
-            # cv.imshow("Dilation", img_dilation)
+            # cv.imshow("Dilation2", img_dilation)
             # cv.waitKey(1)
-            # print("Dilation sum" + str(dilation_sum))
+            print("Person Sum" + str(dilation_sum))
             fwdSpeed = 0
             turnSpeed = 0
             self.lastState = 0
@@ -82,11 +82,12 @@ class PidCtrl:
                 self.stopped = False
                 print("go")
                 self.no_ped_count = 0
-            elif self.already_stopped and dilation_sum < 200:
+            elif self.already_stopped and dilation_sum < 2000:
                 print("waiting")
                 self.no_ped_count +=1
-                print("no ped" + str(self.no_ped_count))
+                print("no ped " + str(self.no_ped_count))
             else:
+                time.sleep(0.2)
                 self.stopped = False
                 print("go")
                 self.no_ped_count = 0
