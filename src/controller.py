@@ -67,6 +67,7 @@ class ControlLoop:
         self.lastState = 0
         self.count = 0
         self.neuralnet = neuralnet.NeuralNet()
+        self.lastFrame =  None
 
     def start_control(self):
         listen = rospy.Subscriber('/R1/pi_camera/image_raw', Image, self.__callback)
@@ -103,19 +104,12 @@ class ControlLoop:
                     if plate1 is not None:
                         self.moveBot.moveForward(0,0)
                         time.sleep(2.5)
-                        plate2, canMove = self.processPlate.proccessPlate(cv_image)
                         # this count should be based on different NN strings
                         self.count += 1
-                        if plate2 is not None:
-                            # parking_string = self.neuralnet.licencePlateToString(plate2)
-                            # pub2.publish(parking_string)
-                            #char1,char2,char3,char4 = self.neuralnet.plotter(plate2)
-                            print("plate 2")
-
-                        else:
-                            # parking_string = self.neuralnet.licencePlateToString(plate1)
-                            # pub2.publish(parking_string)
-                            print("plate 1")
+                        # parking_string = self.neuralnet.licencePlateToString(plate1)
+                        # pub2.publish(parking_string)
+                        print("plate 1")
+                        # should try to have if last
 
                     # if we have no plate, but there is no man in the road, run PID like normal
                     elif canMove is True:
