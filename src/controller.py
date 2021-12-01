@@ -107,34 +107,15 @@ class ControlLoop:
                         # this count should be based on different NN strings
                         self.count += 1
                         if plate2 is not None:
-                            parking_string = self.neuralnet.licencePlateToString(plate2)
-                            pub2.publish(parking_string)
+                            # parking_string = self.neuralnet.licencePlateToString(plate2)
+                            # pub2.publish(parking_string)
                             #char1,char2,char3,char4 = self.neuralnet.plotter(plate2)
-                            # cv2.imshow("Char 1", char1)
-                            # cv2.waitKey(1)
-                            # cv2.imshow("Char 2", char2)
-                            # cv2.waitKey(1)
-                            # cv2.imshow("Char 3", char3)
-                            # cv2.waitKey(1)
-                            # cv2.imshow("Char 4", char4)
-                            # cv2.waitKey(1)
                             print("plate 2")
 
                         else:
-                            parking_string = self.neuralnet.licencePlateToString(plate1)
-                            pub2.publish(parking_string)
-                            #char1,char2,char3,char4 = self.neuralnet.plotter(plate1)
-                            # cv2.imshow("Char 1", char1)
-                            # cv2.waitKey(1)
-                            # cv2.imshow("Char 2", char2)
-                            # cv2.waitKey(1)
-                            # cv2.imshow("Char 3", char3)
-                            # cv2.waitKey(1)
-                            # cv2.imshow("Char 4", char4)
-                            # cv2.waitKey(1)
+                            # parking_string = self.neuralnet.licencePlateToString(plate1)
+                            # pub2.publish(parking_string)
                             print("plate 1")
-
-                        #pub2.publish(string)
 
                     # if we have no plate, but there is no man in the road, run PID like normal
                     elif canMove is True:

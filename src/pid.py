@@ -48,6 +48,8 @@ class PidCtrl:
     def nextMove(self, cv_image):
         fwdSpeed = 0
         turnSpeed = 0
+
+        # if at crosswalk and waiting
         if self.stopped is True:
             height,width,channels = cv_image.shape
             cv_image_crop = cv_image[int(height /1.8):height, width/3:width/2]
@@ -81,7 +83,7 @@ class PidCtrl:
                 self.stopped = False
                 print("go")
 
-
+        # if not waiting at crosswalk
         if self.stopped is False:
             fwdSpeed = 0.2
             turnSpeed = 0.1
@@ -139,27 +141,24 @@ class PidCtrl:
 
     # if not turning, do normal PID for straight road adjustments
             else:
-                # maybe could not take abs then wouldn't have to use backZeros!! to check if left or right turn
                 difference = abs(self.desiredVal - self.__computeAverage(count[6],count[7],count[8]))
 
-                # for crosswalk to not be swerving
-                # this condition may get triggered at other times, may need to find red line?
-                if count[6] and count[7] < 25000 and self.already_stopped is False:
+                if count[6] and count[7] < 24500 and self.already_stopped is False:
                     left_p = 0
                     right_p= 0
                     fwdSpeed =0
                     self.already_stopped = True
                     self.stopped = True
-                elif count[6] and count[7] < 25000 and self.already_stopped:
+                elif count[6] and count[7] < 26000 and self.already_stopped:
                     left_p = 0.00005
                     right_p = 0.00005
                     fwdSpeed = 0.15
 
                 else:
-                    self.already_stopped = False
                     left_p = 0.0003
                     right_p = 0.0003
                     fwdSpeed = 0.15
+                    self.already_stopped = False
                 if backZeros > 0:
                     turnSpeed = difference*left_p
                     if turnSpeed > 3:
@@ -170,7 +169,4 @@ class PidCtrl:
                         turnSpeed = -3
                 self.lastState = 0
 
-
-        # print("fwd speed" + str(fwdSpeed))
-        # print("turn speed" + str(turnSpeed))
         return fwdSpeed,turnSpeed, self.lastState

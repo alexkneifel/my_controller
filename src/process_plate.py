@@ -22,7 +22,7 @@ class ProcessPlate:
     def __init__(self):
         self.plate_search = True
 
-    def isLicensePlate(self, crop, left, right, top , bottom):
+    def isLicensePlate(self, left, right, top , bottom):
         small_width = right - left
         small_height = bottom - top
         if 2.8 < float(small_width)/small_height < 3.9:
@@ -34,9 +34,6 @@ class ProcessPlate:
     def __normalize_img(self, img):
         max_area = 0
         max_c = None
-
-        # cv.imshow("original image ", img)
-        # cv.waitKey(1)
 
         rx = 400.0 / img.shape[1]
         dim = (400, int(img.shape[0] * rx))
@@ -54,8 +51,7 @@ class ProcessPlate:
         hsv = cv.merge((h, result_s, result_v))
         rgb = cv.cvtColor(hsv, cv.COLOR_HSV2BGR)
 
-        # could also try a different blur
-        # cv2.GaussianBlur(gray, (5, 5), 0)
+        #could try a different blur
         blur = cv.medianBlur(rgb,5)
 
         hsv = cv.cvtColor(blur, cv.COLOR_BGR2HSV)
@@ -77,10 +73,10 @@ class ProcessPlate:
         # could increase # iterations or kernel size. could do two iterations of each
         #img_erosion = cv.erode(mask, kernel2, iterations=1)
         img_dilation = cv.dilate(mask, kernel1, iterations=1)
-        # cv.imshow("Dilation", img_dilation)
-        # cv.waitKey(1)
+        cv.imshow("Dilation", img_dilation)
+        cv.waitKey(1)
         dilation_sum = sum(sum(img_dilation))
-        #print(dilation_sum)
+        print(dilation_sum)
 
 # reset to search for plates once we are past the parked vehicle
         if dilation_sum == 0:
@@ -112,18 +108,15 @@ class ProcessPlate:
                     cv.imshow("small plate", test_crop)
                     cv.waitKey(1)
 
-                    if self.isLicensePlate(test_crop, small_leftp, small_rightp, small_topp, small_botp):
+                    if self.isLicensePlate(small_leftp, small_rightp, small_topp, small_botp):
                         leftp = int(small_leftp/rx)
                         rightp = int(small_rightp / rx)
                         botp = int(small_botp / ry) + int(img.shape[0]/1.55)
                         topp = int(small_topp / ry) + int(img.shape[0]/1.55)
                         license_plate_crop = img[topp:botp,leftp:rightp]
-                        # why isnt this photo showing up anymore
-                        # it shows
                         cv.imshow("license plate", license_plate_crop)
                         cv.waitKey(1)
                         self.plate_search = False
-
                         return license_plate_crop, True
                     else:
                         # this would be if the man is in the middle of the road. no plate, but it was above threshold

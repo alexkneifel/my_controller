@@ -137,11 +137,11 @@ class NeuralNet:
         # P starts at 2
         parking_number = self.plate_count % 6
         char1, char2, char3, char4 = self.plotter(img)
-        # absolute garbage 
+        # absolute garbage
         char_list = [self.toCharacter(np.argmax(self.neuralnetwork(char1))),self.toCharacter(np.argmax(self.neuralnetwork(char2))),self.toCharacter(np.argmax(self.neuralnetwork(char3))),self.toCharacter(np.argmax(self.neuralnetwork(char4)))]
         print("parking_number" + str(parking_number))
         print("char list" + str(char_list))
-        # too many values to unpacl
+        # too many values to unpack
         command = str('alexsean,cheese1,')+str(parking_number)+','+str(char_list)
         self.plate_count +=1
         return command
