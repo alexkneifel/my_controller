@@ -1,18 +1,7 @@
 #! /usr/bin/env python
 from __future__ import print_function
-from geometry_msgs.msg import Twist
-import roslib
 import cv2 as cv
-import math
-import roslaunch
 import numpy as np
-import rospy
-from sensor_msgs.msg import Image
-from std_msgs.msg import String
-import time
-from cv_bridge import CvBridge, CvBridgeError
-import matplotlib.pyplot as plt
-import imutils
 import os
 import uuid
 
@@ -53,7 +42,6 @@ class ProcessPlate:
         hsv = cv.merge((h, result_s, result_v))
         rgb = cv.cvtColor(hsv, cv.COLOR_HSV2BGR)
 
-        #could try a different blur
         blur = cv.medianBlur(rgb,5)
 
         hsv = cv.cvtColor(blur, cv.COLOR_BGR2HSV)
@@ -70,8 +58,8 @@ class ProcessPlate:
         mask = cv.inRange(hsv, lower_hsv, upper_hsv)
         kernel1 = np.ones((3,3), np.uint8)
         #kernel2 = np.ones((1, 1), np.uint8)
-        # could also do if hsv is above certain threshold then dilate to reduce processing
 
+#TODO either play with thresh value below or kernels here if missing plate
         # could increase # iterations or kernel size. could do two iterations of each
         #img_erosion = cv.erode(mask, kernel2, iterations=1)
         img_dilation = cv.dilate(mask, kernel1, iterations=1)
@@ -80,14 +68,13 @@ class ProcessPlate:
         dilation_sum = sum(sum(img_dilation))
         print(dilation_sum)
 
-# reset to search for plates once we are past the parked vehicle
         if dilation_sum == 0:
             self.plate_search = True
 
         # if dilation is above certain threshold then do the rest of this
         if self.plate_search == True:
-            # play with values here
 
+#TODO play with this value if keeps missing plate
             if dilation_sum > 11200:
                 self.last_val = dilation_sum
                 contours = cv.findContours(img_dilation, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
@@ -121,17 +108,13 @@ class ProcessPlate:
                         license_plate_crop = img[topp:botp,leftp:rightp]
                         cv.imshow("plate", license_plate_crop)
                         cv.waitKey(1)
+                        #TODO remove savinf photos of plates
                         os.chdir("/home/alexkneifel/LicensePlateData")
                         cv.imwrite("plate" + str(uuid.uuid4()) +".jpg", license_plate_crop)
                         self.plate_search = False
                         return license_plate_crop, True
                     else:
-                        # this would be if the man is in the middle of the road. no plate, but it was above threshold
-                        # if we have dilation sum above, but it is not a plate. then it is the man.
-                        # dont return a plate, but return False that we cant move forward
                         return None, False
-            # if we dont have dilation sum above a certain value, then return no plate, but true that we can move forward
-            # not sure if this is necessarily true
         return None, True
 
     def proccessPlate(self, cv_image):

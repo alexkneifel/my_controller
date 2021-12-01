@@ -1,19 +1,10 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-from geometry_msgs.msg import Twist
-import roslib
 import cv2 as cv
-import math
-import roslaunch
 import numpy as np
-import rospy
-from sensor_msgs.msg import Image
-from std_msgs.msg import String
 import time
-from cv_bridge import CvBridge, CvBridgeError
-import matplotlib.pyplot as plt
-import imutils
+
 
 # let states be, 1 be a corner turn, 0 be straight
 
@@ -41,11 +32,6 @@ class PidCtrl:
     def __computeAverage(self,section1,section2,section3):
         return (section1+section2+section3)/3
 
-#TODO
-# could recalculate value for rhs being where I want it
-# could process smaller image to make PID less intensive
-# could make right hand turns a part of original control instead of its own control
-# could not use there being 0's for turning and just use the P
     def nextMove(self, cv_image):
         fwdSpeed = 0
         turnSpeed = 0
@@ -66,15 +52,11 @@ class PidCtrl:
             upper_hsv = np.array([uh, us, uv])
 
             mask = cv.inRange(hsv, lower_hsv, upper_hsv)
-            # cv.imshow("Mask", mask)
-            # cv.waitKey(1)
 
             kernel1 = np.ones((4, 4), np.uint8)
             img_dilation = cv.dilate(mask, kernel1, iterations=1)
             dilation_sum = sum(sum(img_dilation))
-            # cv.imshow("Dilation2", img_dilation)
-            # cv.waitKey(1)
-            print("Person Sum" + str(dilation_sum))
+            print("Person Sum: " + str(dilation_sum))
             fwdSpeed = 0
             turnSpeed = 0
             self.lastState = 0
@@ -137,7 +119,6 @@ class PidCtrl:
                 min_index = np.argmin(short_count) + frontZeros
             backZeros = self.__countBackZeros(sizeCount,len(short_count),frontZeros)
 
-            # corner turn, if RHS of screen is black turn, or if last state was turning turn,
             if frontZeros ==0 and backZeros > 1 or self.lastState ==1:
                 if min_index == 4 or min_index == 5:
                     fwdSpeed = 0.05
@@ -148,10 +129,10 @@ class PidCtrl:
                     turnSpeed = 1
                     self.lastState = 1
 
-    # if not turning, do normal PID for straight road adjustments
             else:
                 difference = abs(self.desiredVal - self.__computeAverage(count[6],count[7],count[8]))
 
+#TODO maybe raise 24500 is stops at crosswalk randomly again
                 if count[6] and count[7] < 24500 and self.already_stopped is False:
                     left_p = 0
                     right_p= 0

@@ -74,11 +74,13 @@ class ControlLoop:
     def __callback(self, data):
         cv_image = bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
         currentTime = self.clock.getTime()
+        #TODO get rid of ending on 6 plates
         if self.count ==6:
             self.moveBot.moveForward(0, 0)
             self.timer.endTimer()
             self.stopped = True
             print("done")
+
         if currentTime - self.startTime > 230 and self.stopped is not True:
             self.moveBot.moveForward(0,0)
             self.timer.endTimer()
@@ -94,11 +96,8 @@ class ControlLoop:
                 self.lastState = 1
                 print("hi")
             else:
-            #     # if last state was not turning then attempt to process plate
                 if self.lastState ==0:
-                    # get the potential plate, and whether we should move forward
                     plate1, canMove = self.processPlate.proccessPlate(cv_image)
-                # if a plate is returned, stop moving and send this plate to the neural net
                     if plate1 is not None:
                         self.moveBot.moveForward(0,0)
                         time.sleep(2)
@@ -107,13 +106,9 @@ class ControlLoop:
                         #message = self.neuralnet.licencePlateToString(plate1)
                         #pub2.publish(message)
 
-
-                    # if we have no plate, but there is no man in the road, run PID like normal
                     elif canMove is True:
                         fwdVal, turnVal, self.lastState = self.pid.nextMove(cv_image)
                         self.moveBot.moveForward(fwdVal, turnVal)
-
-                # if last state was turning, dont do anything but PID
                 else:
                     fwdVal, turnVal, self.lastState = self.pid.nextMove(cv_image)
                     self.moveBot.moveForward(fwdVal, turnVal)
