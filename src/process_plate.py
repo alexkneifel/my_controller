@@ -23,7 +23,6 @@ class ProcessPlate:
 
     def __init__(self):
         self.plate_search = True
-        self.last_val = 0
 
     def isLicensePlate(self, left, right, top , bottom):
         small_width = right - left
@@ -87,7 +86,10 @@ class ProcessPlate:
 
         # if dilation is above certain threshold then do the rest of this
         if self.plate_search == True:
-            if dilation_sum > 11500:
+            # play with values here
+
+            if dilation_sum > 11200:
+                self.last_val = dilation_sum
                 contours = cv.findContours(img_dilation, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
                 contours = contours[0] if len(contours) == 2 else contours[1]
                 for c in contours:
