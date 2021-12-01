@@ -1,18 +1,11 @@
 #! /usr/bin/env python
 from __future__ import print_function
 from geometry_msgs.msg import Twist
-import roslib
-import cv2
-import math
-import roslaunch
-import numpy as np
 import rospy
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
 import time
 from cv_bridge import CvBridge, CvBridgeError
-import matplotlib.pyplot as plt
-import imutils
 import pid, process_plate, neuralnet
 
 bridge = CvBridge()
@@ -21,8 +14,6 @@ rospy.init_node('my_publisher', anonymous=True)
 pub2 = rospy.Publisher('/license_plate', String, queue_size=1)
 pub = rospy.Publisher('/R1/cmd_vel', Twist, queue_size=1)
 time.sleep(1)
-
-#left all files that need to contact with Nodes in here
 
 class ControlTimer:
 
@@ -39,7 +30,6 @@ class ControlTimer:
 
 class gazeboClock:
     def __init__(self):
-        #self.clock =rospy.Subscriber('/clock', String)
         pass
     def getTime(self):
         return rospy.get_time()
@@ -74,13 +64,8 @@ class ControlLoop:
     def __callback(self, data):
         cv_image = bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
         currentTime = self.clock.getTime()
-        #TODO get rid of ending on 6 plates
-        if self.count ==6:
-            self.moveBot.moveForward(0, 0)
-            self.timer.endTimer()
-            self.stopped = True
-            print("done")
 
+#TODO check that the timer ends, uncomment
         if currentTime - self.startTime > 230 and self.stopped is not True:
             self.moveBot.moveForward(0,0)
             self.timer.endTimer()
@@ -92,7 +77,7 @@ class ControlLoop:
                 if currentTime - self.startTime < 1:
                     self.moveBot.moveForward(0.35, 0)
                 else:
-                    self.moveBot.moveForward(0, 2.22)
+                    self.moveBot.moveForward(0, 2)
                 self.lastState = 1
                 print("hi")
             else:
@@ -100,11 +85,13 @@ class ControlLoop:
                     plate1, canMove = self.processPlate.proccessPlate(cv_image)
                     if plate1 is not None:
                         self.moveBot.moveForward(0,0)
+                        #TODO reduce sleep if calling NN cus stays put for a long time anyways
                         time.sleep(2)
                         print("plate 1 to NN")
                         self.count += 1
-                        #message = self.neuralnet.licencePlateToString(plate1)
-                        #pub2.publish(message)
+                        #TODO unccoment these lines
+                        # message = self.neuralnet.licencePlateToString(plate1)
+                        # pub2.publish(message)
 
                     elif canMove is True:
                         fwdVal, turnVal, self.lastState = self.pid.nextMove(cv_image)

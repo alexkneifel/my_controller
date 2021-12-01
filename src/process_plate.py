@@ -16,8 +16,8 @@ class ProcessPlate:
     def isLicensePlate(self, left, right, top , bottom):
         small_width = right - left
         small_height = bottom - top
-        if 2.8 < float(small_width)/small_height < 3.9:
-            if 30 < small_width < 70 and 10 < small_height <= 20:
+        if 2.8 < float(small_width)/small_height < 4.4:
+            if 25 < small_width < 70 and 5 < small_height <= 20:
                 return True
         else:
             return False
@@ -57,11 +57,7 @@ class ProcessPlate:
 
         mask = cv.inRange(hsv, lower_hsv, upper_hsv)
         kernel1 = np.ones((3,3), np.uint8)
-        #kernel2 = np.ones((1, 1), np.uint8)
 
-#TODO either play with thresh value below or kernels here if missing plate
-        # could increase # iterations or kernel size. could do two iterations of each
-        #img_erosion = cv.erode(mask, kernel2, iterations=1)
         img_dilation = cv.dilate(mask, kernel1, iterations=1)
         cv.imshow("Dilation", img_dilation)
         cv.waitKey(1)
@@ -71,10 +67,8 @@ class ProcessPlate:
         if dilation_sum == 0:
             self.plate_search = True
 
-        # if dilation is above certain threshold then do the rest of this
         if self.plate_search == True:
 
-#TODO play with this value if keeps missing plate
             if dilation_sum > 11200:
                 self.last_val = dilation_sum
                 contours = cv.findContours(img_dilation, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
@@ -108,9 +102,6 @@ class ProcessPlate:
                         license_plate_crop = img[topp:botp,leftp:rightp]
                         cv.imshow("plate", license_plate_crop)
                         cv.waitKey(1)
-                        #TODO remove savinf photos of plates
-                        os.chdir("/home/alexkneifel/LicensePlateData")
-                        cv.imwrite("plate" + str(uuid.uuid4()) +".jpg", license_plate_crop)
                         self.plate_search = False
                         return license_plate_crop, True
                     else:

@@ -4,7 +4,7 @@ import cv2
 from matplotlib import pyplot as plt
 import tensorflow as tf
 # from tensforflow import keras
-import warnings
+
 
 class NeuralNet:
     def __init__(self):
@@ -121,7 +121,6 @@ class NeuralNet:
 
     def neuralnetwork(self, char_img):
         model = tf.keras.models.load_model('/home/alexkneifel/ros_ws/src/my_controller/src/competition-image-to-char-2.h5')
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
         #rx = 35.0 / char_img.shape[1]
         dim = (35, 45)
         resized_img = cv2.resize(char_img, dim, interpolation=cv2.INTER_AREA)
@@ -138,11 +137,12 @@ class NeuralNet:
         if self.plate_count > 6:
             self.plate_count =1
         return self.plate_count
+
     def licencePlateToString(self,img):
-        # P starts at 2
+
         parking_num = self.__getParkingNumber()
         char1, char2, char3, char4 = self.plotter(img)
-        # absolute garbage
+
         char1 = self.toCharacter(np.argmax(self.neuralnetwork(char1)))
         char2 = self.toCharacter(np.argmax(self.neuralnetwork(char2)))
         char3 = self.toCharacter(np.argmax(self.neuralnetwork(char3)))
