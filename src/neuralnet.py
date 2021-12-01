@@ -8,7 +8,7 @@ import warnings
 
 class NeuralNet:
     def __init__(self):
-        self.plate_count = 8
+        self.plate_count = 1
 
     def image_cropper(self,img):
 
@@ -133,16 +133,23 @@ class NeuralNet:
             return str(arg)
         else:
             return chr(arg+55)
+    def __getParkingNumber(self):
+        self.plate_count +=1
+        if self.plate_count > 6:
+            self.plate_count =1
+        return self.plate_count
     def licencePlateToString(self,img):
         # P starts at 2
-        parking_number = self.plate_count % 6
+        parking_num = self.__getParkingNumber()
         char1, char2, char3, char4 = self.plotter(img)
         # absolute garbage
-        char_list = [self.toCharacter(np.argmax(self.neuralnetwork(char1))),self.toCharacter(np.argmax(self.neuralnetwork(char2))),self.toCharacter(np.argmax(self.neuralnetwork(char3))),self.toCharacter(np.argmax(self.neuralnetwork(char4)))]
-        print("parking_number" + str(parking_number))
+        char1 = self.toCharacter(np.argmax(self.neuralnetwork(char1)))
+        char2 = self.toCharacter(np.argmax(self.neuralnetwork(char2)))
+        char3 = self.toCharacter(np.argmax(self.neuralnetwork(char3)))
+        char4 = self.toCharacter(np.argmax(self.neuralnetwork(char4)))
+        char_list = char1+char2+char3+char4
+        print("parking_number: P" + str(parking_num))
         print("char list" + str(char_list))
-        # too many values to unpack
-        command = str('alexsean,cheese1,')+str(parking_number)+','+str(char_list)
-        self.plate_count +=1
+        command = str('alexsean,cheese1,')+str(parking_num)+','+str(char_list)
         return command
 

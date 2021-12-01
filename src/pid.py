@@ -139,12 +139,12 @@ class PidCtrl:
             # corner turn, if RHS of screen is black turn, or if last state was turning turn,
             if frontZeros ==0 and backZeros > 1 or self.lastState ==1:
                 if min_index == 4 or min_index == 5:
-                    fwdSpeed = 0.15
+                    fwdSpeed = 0.05
                     turnSpeed = 0
                     self.lastState = 0
                 else:
-                    fwdSpeed = 0.1
-                    turnSpeed = 3
+                    fwdSpeed = 0.01
+                    turnSpeed = 1
                     self.lastState = 1
 
     # if not turning, do normal PID for straight road adjustments

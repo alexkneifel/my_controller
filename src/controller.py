@@ -64,10 +64,7 @@ class ControlLoop:
         self.moveBot = moveBot()
         self.pid = pid.PidCtrl()
         self.processPlate = process_plate.ProcessPlate()
-        self.lastState = 0
-        self.count = 0
         self.neuralnet = neuralnet.NeuralNet()
-        self.lastPlate = None
 
     def start_control(self):
         listen = rospy.Subscriber('/R1/pi_camera/image_raw', Image, self.__callback)
@@ -77,16 +74,12 @@ class ControlLoop:
         cv_image = bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
         currentTime = self.clock.getTime()
 
-        if currentTime - self.startTime > 239 and self.stopped is not True:
+        if currentTime - self.startTime > 230 and self.stopped is not True:
             self.moveBot.moveForward(0,0)
             self.timer.endTimer()
             self.stopped = True
         elif self.stopped is True:
             self.moveBot.moveForward(0, 0)
-        elif self.count > 9:
-            self.moveBot.moveForward(0, 0)
-            self.timer.endTimer()
-            self.stopped = True
         else:
             if currentTime - self.startTime < 1.5:
                 if currentTime - self.startTime < 1:
@@ -104,10 +97,10 @@ class ControlLoop:
                     if plate1 is not None:
                         self.moveBot.moveForward(0,0)
                         time.sleep(2)
-                        # this count could be based on different NN strings
-                        self.count += 1
                         print("plate 1 to NN")
-                        #self.neuralnet.licencePlateToString(plate1)
+                        #message = self.neuralnet.licencePlateToString(plate1)
+                        #pub2.publish(message)
+
 
                     # if we have no plate, but there is no man in the road, run PID like normal
                     elif canMove is True:
