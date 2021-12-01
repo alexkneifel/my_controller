@@ -141,15 +141,13 @@ class NeuralNet:
     def licencePlateToString(self,img):
 
         parking_num = self.__getParkingNumber()
-        char1, char2, char3, char4 = self.plotter(img)
-
-        char1 = self.toCharacter(np.argmax(self.neuralnetwork(char1)))
-        char2 = self.toCharacter(np.argmax(self.neuralnetwork(char2)))
-        char3 = self.toCharacter(np.argmax(self.neuralnetwork(char3)))
-        char4 = self.toCharacter(np.argmax(self.neuralnetwork(char4)))
-        char_list = char1+char2+char3+char4
-        print("parking_number: P" + str(parking_num))
-        print("char list" + str(char_list))
-        command = str('alexsean,cheese1,')+str(parking_num)+','+str(char_list)
+        # char1, char2, char3, char4 = self.plotter(img)
+        #
+        # char1 = self.toCharacter(np.argmax(self.neuralnetwork(char1)))
+        # char2 = self.toCharacter(np.argmax(self.neuralnetwork(char2)))
+        # char3 = self.toCharacter(np.argmax(self.neuralnetwork(char3)))
+        # char4 = self.toCharacter(np.argmax(self.neuralnetwork(char4)))
+        # char_list = char1+char2+char3+char4
+        command = str('alexsean,cheese1,')+str(parking_num)+','+'0000'
         return command
 

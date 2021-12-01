@@ -132,8 +132,8 @@ class PidCtrl:
             else:
                 difference = abs(self.desiredVal - self.__computeAverage(count[6],count[7],count[8]))
 
-#TODO maybe raise 24500 is stops at crosswalk randomly again
-                if count[6] and count[7] < 25000 and self.already_stopped is False:
+#TODO maybe raise 24500 is stops at crosswalk randomly again, did it again, i think lower it?
+                if count[6] and count[7] < 24000 and self.already_stopped is False:
                     left_p = 0
                     right_p= 0
                     fwdSpeed =0

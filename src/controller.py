@@ -70,6 +70,10 @@ class ControlLoop:
             self.moveBot.moveForward(0,0)
             self.timer.endTimer()
             self.stopped = True
+        elif self.count >6 and self.stopped is not True:
+            self.moveBot.moveForward(0, 0)
+            self.timer.endTimer()
+            self.stopped = True
         elif self.stopped is True:
             self.moveBot.moveForward(0, 0)
         else:
@@ -90,8 +94,8 @@ class ControlLoop:
                         print("plate 1 to NN")
                         self.count += 1
                         #TODO unccoment these lines
-                        # message = self.neuralnet.licencePlateToString(plate1)
-                        # pub2.publish(message)
+                        message = self.neuralnet.licencePlateToString(plate1)
+                        pub2.publish(message)
 
                     elif canMove is True:
                         fwdVal, turnVal, self.lastState = self.pid.nextMove(cv_image)
