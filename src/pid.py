@@ -15,6 +15,7 @@ class PidCtrl:
         self.stopped = False
         self.already_stopped = False
         self.no_ped_count = 0
+        self.count = 0
 
     def __countFrontZeros(self, array):
         front_zeros=0
@@ -35,6 +36,7 @@ class PidCtrl:
     def nextMove(self, cv_image):
         fwdSpeed = 0
         turnSpeed = 0
+        self.count = self.count + 1
 
         # if at crosswalk and waiting
         if self.stopped is True:
@@ -133,7 +135,7 @@ class PidCtrl:
                 difference = abs(self.desiredVal - self.__computeAverage(count[6],count[7],count[8]))
 
 #TODO maybe raise 24500 is stops at crosswalk randomly again, did it again, i think lower it?
-                if count[6] and count[7] < 24000 and self.already_stopped is False:
+                if count[6] and count[7] < 24000 and self.already_stopped is False and self.count > 300:
                     left_p = 0
                     right_p= 0
                     fwdSpeed =0

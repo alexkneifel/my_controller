@@ -48,14 +48,16 @@ class ControlLoop:
         self.bridge = CvBridge()
         self.clock = gazeboClock()
         self.timer = ControlTimer()
-        self.timer.startTimer()
         self.startTime = self.clock.getTime()
         self.stopped = False
-        self.moveBot = moveBot()
         self.pid = pid.PidCtrl()
         self.processPlate = process_plate.ProcessPlate()
         self.neuralnet = neuralnet.NeuralNet()
         self.count = 0
+        self.currentTime = 0
+        self.timer.startTimer()
+        self.lastState = 0
+        self.moveBot = moveBot()
 
     def start_control(self):
         listen = rospy.Subscriber('/R1/pi_camera/image_raw', Image, self.__callback)
@@ -63,10 +65,11 @@ class ControlLoop:
 
     def __callback(self, data):
         cv_image = bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
-        currentTime = self.clock.getTime()
+        self.currentTime = self.clock.getTime()
 
 #TODO check that the timer ends, uncomment
-        if currentTime - self.startTime > 230 and self.stopped is not True:
+        # first move is all messed up it thinks there is a pedestrian there
+        if self.currentTime - self.startTime > 230 and self.stopped is not True:
             self.moveBot.moveForward(0,0)
             self.timer.endTimer()
             self.stopped = True
@@ -77,11 +80,11 @@ class ControlLoop:
         elif self.stopped is True:
             self.moveBot.moveForward(0, 0)
         else:
-            if currentTime - self.startTime < 1.5:
-                if currentTime - self.startTime < 1:
-                    self.moveBot.moveForward(0.35, 0)
+            if self.currentTime - self.startTime < 6:
+                if self.currentTime - self.startTime < 5:
+                    self.moveBot.moveForward(0.15, 0)
                 else:
-                    self.moveBot.moveForward(0, 2)
+                    self.moveBot.moveForward(0, 1)
                 self.lastState = 1
                 print("hi")
             else:

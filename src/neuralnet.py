@@ -1,153 +1,209 @@
 import numpy as np
-import cv2
+import cv2 as cv
 
 from matplotlib import pyplot as plt
 import tensorflow as tf
-# from tensforflow import keras
+from tensorflow.keras import models
+from tensorflow.python.keras.backend import set_session
+from tensorflow.python.keras.models import load_model
+
+from collections import OrderedDict
+
+sess1 = tf.Session()
+graph1 = tf.get_default_graph()
+set_session(sess1)
 
 
 class NeuralNet:
     def __init__(self):
         self.plate_count = 1
+        self.num_model = tf.keras.models.load_model('/home/alexkneifel/Downloads/num_nn')
+        self.char_model = tf.keras.models.load_model('/home/alexkneifel/Downloads/char_nn')
 
-    def image_cropper(self,img):
+    def find_chars(self, img_dilation, img_gray):
+        count = 0
+        order_of_chars = {}
+        crops = {}
+        flipd_img = cv.bitwise_not(img_dilation)
+        width = flipd_img.shape[1]
+        max_area = 0
+        contours = cv.findContours(flipd_img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+        contours = contours[0] if len(contours) == 2 else contours[1]
+        #cnt = sorted(contours, key=cv.contourArea, reverse=True)
+        for max_c in contours:
+            leftmost = tuple(max_c[max_c[:, :, 0].argmin()][0])
+            rightmost = tuple(max_c[max_c[:, :, 0].argmax()][0])
+            top = tuple(max_c[max_c[:, :, 1].argmin()][0])
+            bot = tuple(max_c[max_c[:, :, 1].argmax()][0])
+            if leftmost[0] - 5 > 0 and top[1] - 5 > 0:
+                small_leftp = int(leftmost[0] - 5)
+                small_rightp = int(rightmost[0] + 5)
+                small_topp = int(top[1] - 5)
+                small_botp = int(bot[1] + 5)
+                # making minimum size of bounding box a square
+                if small_rightp - small_leftp < small_botp - small_topp:
+                    diff = (small_botp - small_topp) - (small_rightp - small_leftp)
+                    small_leftp = small_leftp - self.ceildiv(diff, 2)
+                    small_rightp = small_rightp + (diff // 2)
+                # if including middle thing, cut it in half
+                crop_width = small_rightp - small_leftp
+                if 0.42 < small_leftp / width < 0.455 and crop_width < 60:
+                    small_leftp = small_leftp + int((crop_width) / 2)
+                crop = img_gray[small_topp:small_botp, small_leftp:small_rightp]
+                if crop.shape[1] / float(crop.shape[0]) >= 1:
+                    order_of_chars.update({count: small_leftp})
+                    crops.update({count: crop})
+                    count = count + 1
 
-        img_bin = np.zeros((img.shape[0], img.shape[1]))
-        for i in range(0, img.shape[0]):
-            for j in range(0, img.shape[1]):
-                if (img[i, j] > 60):
-                    img_bin[i, j] = 255
-                else:
-                    img_bin[i, j] = 0
 
-        col_sum = np.zeros((img_bin.shape[1], 1))
-        for i in range(0, img_bin.shape[1]):
-            col = 0
-            for j in range(0, img_bin.shape[0]):
-                col += img_bin[j, i]
-            col_sum[i] = col
+        for count in list(crops.keys()):
+            if crops[count].shape[0] < 18:
+                crops.pop(count)
 
-        i = 0
-        a = 0
-        while col_sum[i] < 500:
-            i += 1
-            if col_sum[i] > 500:
-                a = i
-        crop_img_bin = img_bin[0:img_bin.shape[0], a:img_bin.shape[1]]
-        return crop_img_bin
+        four_points = []
 
-    def bound_finder(self,img):
-        initial_guess1 = 5
-        thresh = 50
-        margin = 5
-
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        chars = OrderedDict(sorted(crops.items(), key=lambda kv: kv[1].size, reverse=True)[:4])
 
 
-        img_bin = np.zeros((img.shape[0], img.shape[1]))
-        for i in range(0, img.shape[0]):
-            for j in range(0, img.shape[1]):
-                if (img[i, j] > 60):
-                    img_bin[i, j] = 0
-                else:
-                    img_bin[i, j] = 255
+        for count1, char in chars.items():
+            for count2, point in order_of_chars.items():
+                if count1 == count2:
+                    four_points.append(point)
 
-        col_sum = np.zeros((img_bin.shape[1], 1))
-        for i in range(0, img_bin.shape[1]):
-            col = 0
-            for j in range(0, img_bin.shape[0]):
-                col += img_bin[j, i]
-            col_sum[i] = col
-            # print(str(i) + " " + str(col_sum[i]))
 
-        a = initial_guess1
-        while col_sum[a] < thresh:
-            a += 1
-        a -= margin
-        b = a + margin + 1
-        while col_sum[b] > thresh:
-            b += 1
-        b += margin
+        zip_iterator = zip(four_points, chars.values())
+        chars_dict = OrderedDict(zip_iterator)
+        organized_chars_map = OrderedDict(sorted(chars_dict.items(), key=lambda kv: kv[0]))
+        organized_chars = list(organized_chars_map.values())
 
-        c = b
-        while col_sum[c] < thresh:
-            c += 1
-        c -= margin
-        d = c + margin + 1
-        while col_sum[d] > thresh:
-            d += 1
-        d += margin
+        return organized_chars, flipd_img
 
-        imgshape = int(img.shape[1])
-        e = d + int(imgshape * 0.18)
-        while col_sum[e] < thresh:
-            e += 1
-        e -= margin
-        f = e + margin + 1
-        while col_sum[f] > thresh:
-            f += 1
-        f += margin
+    def ceildiv(self, a, b):
+        return -(a // -b)
 
-        g = f
-        while col_sum[g] < thresh:
-            g += 1
-        g -= margin
-        h = g + margin + 1
-        while col_sum[h] > thresh:
-            h += 1
-        h += margin
+    def four_photo_return(self, plate):
+        two_split = False
 
-        return (a, b), (c, d), (e, f), (g, h)
-    def colsum(self,cropped_img):
-        cropped_img = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
 
-        col_sum = np.zeros((cropped_img.shape[1], 1))
-        for i in range(0, cropped_img.shape[1]):
-            col = 0
-            for j in range(0, cropped_img.shape[0]):
-                col += cropped_img[j, i]
-            col_sum[i] = col
+        gray = cv.cvtColor(plate, cv.COLOR_BGR2GRAY)
+        thresh = cv.adaptiveThreshold(gray, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 107, 22)
+        kernel1 = np.ones((2, 2), np.uint8)
+        img_erosion = cv.erode(thresh, kernel1, iterations=1)
+        dilate = cv.dilate(img_erosion, kernel1, iterations=1)
 
-    def plotter(self,cropped_img):
+        chars, flipd_img = self.find_chars(dilate, gray)
+        plate_chars = []
 
-        (a,b), (c,d), (e,f), (g,h) = self.bound_finder(cropped_img)
+        if sum(sum(flipd_img)) > 26000:
+            for i in range(4):
+                if chars[i].shape[1] / float(chars[i].shape[0]) > 1.455:
+                    kernel1 = np.ones((2, 2), np.uint8)
+                    two_dilate = cv.dilate(dilate, kernel1, iterations=1)
+                    chars, flipd_img = self.find_chars(two_dilate, gray)
+                    # print("extra dilation")
+                    break
 
-        char1=cropped_img[0:60,a:b]
-        char2=cropped_img[0:60,c:d]
-        char3=cropped_img[0:60,e:f]
-        char4=cropped_img[0:60,g:h]
+        for i in range(len(chars)):
+            height = chars[i].shape[0]
+            width = chars[i].shape[1]
+            if width / float(height) > 2.65:
+                # print("pre-3 split")
+                plate_chars.append(chars[i][:height, int((0.333) * width):int((0.666) * width)])
+                plate_chars.append(chars[i][:height, int((0.666) * width):width])
+            elif width / float(height) > 1.55:
+                # print("pre-2 split")
+                two_split = True
+                plate_chars.append(chars[i][:height, 0:int((0.5) * width)])
+                plate_chars.append(chars[i][:height, int((0.5) * width):width])
+            else:
+                plate_chars.append(chars[i])
 
-        return char1,char2,char3,char4
+        if len(plate_chars) == 5 and two_split:
+            min_val = plate_chars[4].size
+            min_index = 4
+            for i in range(4):
+                if plate_chars[i].size < min_val:
+                    min_val = plate_chars[i].size
+                    min_index = i
+            plate_chars.pop(min_index)
 
-    def neuralnetwork(self, char_img):
-        model = tf.keras.models.load_model('/home/alexkneifel/ros_ws/src/my_controller/src/competition-image-to-char-2.h5')
-        #rx = 35.0 / char_img.shape[1]
-        dim = (35, 45)
-        resized_img = cv2.resize(char_img, dim, interpolation=cv2.INTER_AREA)
-        char_img_aug = np.expand_dims(resized_img, axis=0)
-        char_predict = model.predict(char_img_aug)[0]
-        return char_predict
-    def toCharacter(self,arg):
-        if arg<10:
-            return str(arg)
-        else:
-            return chr(arg+55)
+        first_char = cv.resize(plate_chars[0], (26, 22), interpolation=cv.INTER_AREA)
+        second_char = cv.resize(plate_chars[1], (26, 22), interpolation=cv.INTER_AREA)
+        first_num = cv.resize(plate_chars[2], (26, 22), interpolation=cv.INTER_AREA)
+        second_num = cv.resize(plate_chars[3], (26, 22), interpolation=cv.INTER_AREA)
+        cv.imshow("First Char", first_char)
+        cv.waitKey(1)
+        cv.imshow("2nd Char", second_char)
+        cv.waitKey(1)
+        cv.imshow("1st Num", first_num)
+        cv.waitKey(1)
+        cv.imshow("2nd Num", second_num)
+        cv.waitKey(1)
+
+        # order of my chars is messed up, but it is getting all the chars which is good
+
+        return first_char, second_char, first_num, second_num
+
+    def neuralnetwork(self, plate):
+        characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        nums = "0123456789"
+        # right now these char images are no good
+
+        # step 2 this function is good so need to check into these methods, what this is returning
+        first_char_img, second_char_img, first_num_img, second_num_img = self.four_photo_return(plate)
+
+        # this is saying it is missing fourth dimension
+        first_char_img = np.asarray(first_char_img)
+        first_char_img = first_char_img.reshape(-1, 26, 22, 1)
+        global sess1
+        global graph1
+        with graph1.as_default():
+            set_session(sess1)
+            predicted_one = self.char_model.predict(first_char_img)
+        first_char = [characters[np.argmax(i)] for i in predicted_one]
+
+        second_char_img = np.asarray(second_char_img)
+        second_char_img = second_char_img.reshape(-1, 26, 22, 1)
+        with graph1.as_default():
+            set_session(sess1)
+            predicted_two = self.char_model.predict(second_char_img)
+        second_char = [characters[np.argmax(i)] for i in predicted_two]
+
+        first_num_img = np.asarray(first_num_img)
+        first_num_img = first_num_img.reshape(-1, 26, 22, 1)
+        with graph1.as_default():
+            set_session(sess1)
+            predicted_three = self.num_model.predict(first_num_img)
+        first_num = [nums[np.argmax(i)] for i in predicted_three]
+
+        second_num_img = np.asarray(second_num_img)
+        second_num_img = second_num_img.reshape(-1, 26, 22, 1)
+        with graph1.as_default():
+            set_session(sess1)
+            predicted_four = self.num_model.predict(second_num_img)
+        second_num = [nums[np.argmax(i)] for i in predicted_four]
+
+        return first_char, second_char, first_num, second_num
+
     def __getParkingNumber(self):
-        self.plate_count +=1
+        self.plate_count += 1
         if self.plate_count > 6:
-            self.plate_count =1
+            self.plate_count = 1
         return self.plate_count
 
-    def licencePlateToString(self,img):
+    def licencePlateToString(self, img):
+        # maybe these are not grayscale images ?
+        # step 1: Check image passed to processing, it is same as test images
+        # cv.imshow("image passed to NN", img)
+
+        first_char, second_char, first_num, second_num = self.neuralnetwork(img)
 
         parking_num = self.__getParkingNumber()
-        # char1, char2, char3, char4 = self.plotter(img)
-        #
-        # char1 = self.toCharacter(np.argmax(self.neuralnetwork(char1)))
-        # char2 = self.toCharacter(np.argmax(self.neuralnetwork(char2)))
-        # char3 = self.toCharacter(np.argmax(self.neuralnetwork(char3)))
-        # char4 = self.toCharacter(np.argmax(self.neuralnetwork(char4)))
-        # char_list = char1+char2+char3+char4
-        command = str('alexsean,cheese1,')+str(parking_num)+','+'0000'
-        return command
 
+        char_list = first_char + second_char + first_num + second_num
+
+        char_list = ''.join(char_list)
+
+        # TODO this should be returning the message
+        command = str('alexsean,cheese1,') + str(parking_num) + ',' + str(char_list)
+        return command
