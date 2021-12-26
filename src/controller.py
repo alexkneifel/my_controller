@@ -67,7 +67,6 @@ class ControlLoop:
         cv_image = bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
         self.currentTime = self.clock.getTime()
 
-#TODO check that the timer ends, uncomment
         # first move is all messed up it thinks there is a pedestrian there
         if self.currentTime - self.startTime > 230 and self.stopped is not True:
             self.moveBot.moveForward(0,0)
@@ -92,11 +91,9 @@ class ControlLoop:
                     plate1, canMove = self.processPlate.proccessPlate(cv_image)
                     if plate1 is not None:
                         self.moveBot.moveForward(0,0)
-                        #TODO reduce sleep if calling NN cus stays put for a long time anyways
                         time.sleep(2)
                         print("plate 1 to NN")
                         self.count += 1
-                        #TODO unccoment these lines
                         message = self.neuralnet.licencePlateToString(plate1)
                         pub2.publish(message)
 

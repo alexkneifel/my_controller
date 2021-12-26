@@ -4,7 +4,7 @@ import numpy as np
 import cv2 as cv
 import time
 
-img = cv.imread('/home/alexkneifel/Pictures/nml_P1.png',cv.IMREAD_COLOR)
+img = cv.imread('/home/alexkneifel/LicensePlateData/pl_IR_47.jpg',cv.IMREAD_COLOR)
 img = cv.medianBlur(img,5)
 
 # Convert BGR to HSV
@@ -21,7 +21,7 @@ upper_hsv = np.array([uh,us,uv])
 
 # Threshold the HSV image to get only blue colors
 mask = cv.inRange(hsv, lower_hsv, upper_hsv)
-window_name = "HSV Calibrator"
+window_name = "IR 47 Light Window"
 cv.namedWindow(window_name)
 
 def nothing(x):
@@ -55,8 +55,8 @@ print("Loaded images")
 while(1):
     # Threshold the HSV image to get only blue colors
     mask = cv.inRange(hsv, lower_hsv, upper_hsv)
-    cv.putText(mask,'Lower HSV: [' + str(lh) +',' + str(ls) + ',' + str(lv) + ']', (10,30), font, 0.5, (200,255,155), 1, cv.LINE_AA)
-    cv.putText(mask,'Upper HSV: [' + str(uh) +',' + str(us) + ',' + str(uv) + ']', (10,60), font, 0.5, (200,255,155), 1, cv.LINE_AA)
+    #cv.putText(mask,'Lower HSV: [' + str(lh) +',' + str(ls) + ',' + str(lv) + ']', (10,30), font, 0.5, (200,255,155), 1, cv.LINE_AA)
+    #cv.putText(mask,'Upper HSV: [' + str(uh) +',' + str(us) + ',' + str(uv) + ']', (10,60), font, 0.5, (200,255,155), 1, cv.LINE_AA)
 
     cv.imshow(window_name,mask)
 
