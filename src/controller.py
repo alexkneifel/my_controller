@@ -6,6 +6,8 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import String
 import time
 from cv_bridge import CvBridge, CvBridgeError
+
+import innerloop
 import pid, process_plate, neuralnet
 
 bridge = CvBridge()
@@ -58,6 +60,8 @@ class ControlLoop:
         self.timer.startTimer()
         self.lastState = 0
         self.moveBot = moveBot()
+        self.innerLoop = innerloop.InnerLoop()
+        self.controlbot = False
 
     def start_control(self):
         listen = rospy.Subscriber('/R1/pi_camera/image_raw', Image, self.__callback)
@@ -68,14 +72,19 @@ class ControlLoop:
         self.currentTime = self.clock.getTime()
 
         # first move is all messed up it thinks there is a pedestrian there
-        if self.currentTime - self.startTime > 230 and self.stopped is not True:
-            self.moveBot.moveForward(0,0)
-            self.timer.endTimer()
-            self.stopped = True
-        elif self.count >6 and self.stopped is not True:
-            self.moveBot.moveForward(0, 0)
-            self.timer.endTimer()
-            self.stopped = True
+        # if self.currentTime - self.startTime > 230 and self.stopped is not True:
+        #     self.moveBot.moveForward(0,0)
+        #     self.timer.endTimer()
+        #     self.stopped = True
+        if self.count is 0:
+            if self.controlbot is False:
+                self.moveBot.moveForward(0, 0)
+                self.controlbot = True
+            self.innerLoop.viewWorld(cv_image)
+        #elif self.count >6 and self.stopped is not True:
+            # self.moveBot.moveForward(0, 0)
+            # self.timer.endTimer()
+            # self.stopped = True
         elif self.stopped is True:
             self.moveBot.moveForward(0, 0)
         else:
