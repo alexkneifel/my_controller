@@ -44,6 +44,7 @@ class moveBot:
         self.move.angular.z = turnVal
         pub.publish(self.move)
 
+
 class ControlLoop:
 
     def __init__(self):
@@ -55,12 +56,12 @@ class ControlLoop:
         self.pid = pid.PidCtrl()
         self.processPlate = process_plate.ProcessPlate()
         self.neuralnet = neuralnet.NeuralNet()
+        self.innerLoop = innerloop.InnerLoop()
         self.count = 0
         self.currentTime = 0
         self.timer.startTimer()
         self.lastState = 0
         self.moveBot = moveBot()
-        self.innerLoop = innerloop.InnerLoop()
         self.controlbot = False
 
     def start_control(self):
@@ -81,6 +82,12 @@ class ControlLoop:
                 self.moveBot.moveForward(0, 0)
                 self.controlbot = True
             self.innerLoop.viewWorld(cv_image)
+            #fwdVal,turnVal = self.innerLoop.viewWorld(cv_image)
+            #print(str(fwdVal)+ " 0,0,0,0, "+ str(turnVal))
+           # self.moveBot.moveForward(fwdVal, turnVal)
+            #vel1,vel2,vel3,vel4,vel5,vel6 =
+        #elif self.count ==6:
+            #self.innerLoop.viewWorld(cv_image)
         #elif self.count >6 and self.stopped is not True:
             # self.moveBot.moveForward(0, 0)
             # self.timer.endTimer()

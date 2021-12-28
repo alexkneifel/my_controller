@@ -2,12 +2,13 @@ import numpy as np
 import cv2 as cv
 
 from matplotlib import pyplot as plt
+
+
+from collections import OrderedDict
 import tensorflow as tf
 from tensorflow.keras import models
 from tensorflow.python.keras.backend import set_session
 from tensorflow.python.keras.models import load_model
-
-from collections import OrderedDict
 
 sess1 = tf.Session()
 graph1 = tf.get_default_graph()
