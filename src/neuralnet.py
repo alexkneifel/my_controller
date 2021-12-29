@@ -18,8 +18,8 @@ set_session(sess1)
 class NeuralNet:
     def __init__(self):
         self.plate_count = 1
-        self.num_model = tf.keras.models.load_model('/home/alexkneifel/Downloads/num_nn')
-        self.char_model = tf.keras.models.load_model('/home/alexkneifel/Downloads/char_nn')
+        self.num_model = models.load_model('/home/alexkneifel/Downloads/num_nn')
+        self.char_model = models.load_model('/home/alexkneifel/Downloads/char_nn')
 
     def find_chars(self, img_dilation, img_gray):
         count = 0
@@ -193,9 +193,6 @@ class NeuralNet:
         return self.plate_count
 
     def licencePlateToString(self, img):
-        # maybe these are not grayscale images ?
-        # step 1: Check image passed to processing, it is same as test images
-        # cv.imshow("image passed to NN", img)
 
         first_char, second_char, first_num, second_num = self.neuralnetwork(img)
 
@@ -204,7 +201,5 @@ class NeuralNet:
         char_list = first_char + second_char + first_num + second_num
 
         char_list = ''.join(char_list)
-
-        # TODO this should be returning the message
         command = str('alexsean,cheese1,') + str(parking_num) + ',' + str(char_list)
         return command

@@ -73,28 +73,22 @@ class ControlLoop:
         self.currentTime = self.clock.getTime()
 
         # first move is all messed up it thinks there is a pedestrian there
-        # if self.currentTime - self.startTime > 230 and self.stopped is not True:
-        #     self.moveBot.moveForward(0,0)
-        #     self.timer.endTimer()
-        #     self.stopped = True
-        if self.count is 0:
-            if self.controlbot is False:
-                self.moveBot.moveForward(0, 0)
-                self.controlbot = True
-            self.innerLoop.viewWorld(cv_image)
-            #fwdVal,turnVal = self.innerLoop.viewWorld(cv_image)
-            #print(str(fwdVal)+ " 0,0,0,0, "+ str(turnVal))
-           # self.moveBot.moveForward(fwdVal, turnVal)
-            #vel1,vel2,vel3,vel4,vel5,vel6 =
-        #elif self.count ==6:
-            #self.innerLoop.viewWorld(cv_image)
-        #elif self.count >6 and self.stopped is not True:
-            # self.moveBot.moveForward(0, 0)
-            # self.timer.endTimer()
-            # self.stopped = True
+        if self.currentTime - self.startTime > 230 and self.stopped is not True:
+            self.moveBot.moveForward(0,0)
+            self.timer.endTimer()
+            self.stopped = True
+        elif self.count ==6:
+            fwdVal,turnVal = self.innerLoop.viewWorld(cv_image)
+            print(str(fwdVal) + " 0,0,0,0, " + str(turnVal))
+            self.moveBot.moveForward(fwdVal, turnVal)
+        elif self.count >6 and self.stopped is not True:
+            self.moveBot.moveForward(0, 0)
+            self.timer.endTimer()
+            self.stopped = True
         elif self.stopped is True:
             self.moveBot.moveForward(0, 0)
         else:
+            # need to fix this beginning move
             if self.currentTime - self.startTime < 6:
                 if self.currentTime - self.startTime < 5:
                     self.moveBot.moveForward(0.15, 0)
