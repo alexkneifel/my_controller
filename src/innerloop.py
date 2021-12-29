@@ -4,6 +4,7 @@ from geometry_msgs.msg import Twist
 import rospy
 import time
 from uuid import uuid4
+import os
 
 import tensorflow as tf
 from tensorflow.keras import models
@@ -22,6 +23,8 @@ from tensorflow.python.keras.models import load_model
 # graph2 = tf.get_default_graph()
 # set_session(sess2)
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 class InnerLoop:
 
 
@@ -36,8 +39,9 @@ class InnerLoop:
         self.session = tf.Session()
         self.graph = tf.get_default_graph()
         set_session(self.session)
-        self.vel_model = models.load_model('/home/alexkneifel/Downloads/vel_nn')
+        self.vel_model = models.load_model('/home/alexkneifel/Downloads/vel_nn_2')
         time.sleep(1)
+
 
     def __callback(self, cmd_mesg):
         # mesg = str(cmd_mesg).replace("linear: \n  x: ", "")
@@ -74,11 +78,10 @@ class InnerLoop:
         # should resize to quite a bit smaller, and then get lots of data
         rx = 200.0 / mask.shape[1]
         dim = (200, int(mask.shape[0] * rx))
-        print(dim)
         resize_img = cv.resize(mask, dim, interpolation=cv.INTER_AREA)
         # i need to resize this image,
-        cv.imshow("Mask: ", resize_img)
-        cv.waitKey(1)
+        # cv.imshow("Mask: ", resize_img)
+        # cv.waitKey(1)
         #self.content[0] = resize_img
         #print("mask")
         self.match = False
@@ -91,20 +94,16 @@ class InnerLoop:
         road_img = np.asarray(road_img)
         road_img = road_img.reshape(-1, 200, 112, 1)
         characters = [1,0,0,0,0,0],[0,1,0,0,0,0],[0,0,1,0,0,0],[0,0,0,1,0,0],[0,0,0,0,1,0],[0,0,0,0,0,1]
-        #b = np.zeros(6)
-        print("pre-prediction")
-        # I got rid of the globals here ?
         with self.graph.as_default():
             set_session(self.session)
             predicted_one = self.vel_model.predict(road_img)
-            #predicted[np.where(predicted==np.max(predicted))] = 1
             predicted = [characters[np.argmax(i)] for i in predicted_one]
-            # need to find max in that array
             print("predicted: " + str(predicted))
         if np.array_equal(predicted,[[1,0,0,0,0,0]]):
             return vel1,vel6
         elif np.array_equal(predicted,[[0,1,0,0,0,0]]):
             vel1 = 0.295245
+            vel6 = 0.05
             return vel1,vel6
         elif np.array_equal(predicted,[[0,0,1,0,0,0]]):
             vel6 = 1.5944049
@@ -113,8 +112,9 @@ class InnerLoop:
             vel6 = -1.5944049
             return vel1, vel6
         elif np.array_equal(predicted,[[0,0,0,0,1,0]]):
-            vel1 = 0.295245
-            vel6 = 1.5944049
+            vel1 = 0.3
+            #vel6 = 1.5944049
+            vel6 = 1.75
             return vel1, vel6
         elif np.array_equal(predicted,[[0,0,0,0,0,1]]):
             vel1 = 0.295245
@@ -132,22 +132,22 @@ class InnerLoop:
         # ['0.295245', '0.0', '0.0', '0.0', '0.0', '-1.5944049'] forward right-> [0,0,0,0,0,1]
         if self.content[1] == ['0.0', '0.0', '0.0', '0.0', '0.0', '0.0']:
             # save to stationary file
-            cv.imwrite(self.path+'stationary/'+str(uuid4())+'.jpg', self.content[0])
+            cv.imwrite(self.path+'stationary/3data'+str(uuid4())+'.jpg', self.content[0])
         elif self.content[1] == ['0.0', '0.0', '0.0', '0.0', '0.0', '1.5944049']:
             # save to left file
-            cv.imwrite(self.path + 'left/' + str(uuid4()) + '.jpg', self.content[0])
+            cv.imwrite(self.path + 'left/3data' + str(uuid4()) + '.jpg', self.content[0])
         elif self.content[1] == ['0.0', '0.0', '0.0', '0.0', '0.0', '-1.5944049']:
             # save to right file
-            cv.imwrite(self.path + 'right/' + str(uuid4()) + '.jpg', self.content[0])
+            cv.imwrite(self.path + 'right/3data' + str(uuid4()) + '.jpg', self.content[0])
         elif self.content[1] == ['0.295245', '0.0', '0.0', '0.0', '0.0', '0.0']:
             # save to forward file
-            cv.imwrite(self.path + 'forward/' + str(uuid4()) + '.jpg', self.content[0])
+            cv.imwrite(self.path + 'forward/3data' + str(uuid4()) + '.jpg', self.content[0])
         elif self.content[1] == ['0.295245', '0.0', '0.0', '0.0', '0.0', '1.5944049']:
             # save to forward-left file
-            cv.imwrite(self.path + 'left_forward/' + str(uuid4()) + '.jpg', self.content[0])
+            cv.imwrite(self.path + 'left_forward/3data' + str(uuid4()) + '.jpg', self.content[0])
         elif self.content[1] == ['0.295245', '0.0', '0.0', '0.0', '0.0', '-1.5944049']:
             # save to forward-right file
-            cv.imwrite(self.path + 'right_forward/' + str(uuid4()) + '.jpg', self.content[0])
+            cv.imwrite(self.path + 'right_forward/3data' + str(uuid4()) + '.jpg', self.content[0])
         #print(self.content[1])
 
 

@@ -22,7 +22,7 @@ class ProcessPlate:
         else:
             return False
 
-    def __normalize_img(self, img):
+    def __normalize_img(self, img, secondLoop):
         max_area = 0
         max_c = None
 
@@ -32,7 +32,10 @@ class ProcessPlate:
         height, width, channels = resized_img.shape
         ry = height / float(img.shape[0])
 
-        cv_image_crop = resized_img[int(height/1.55):height, 0:width/2]
+        if secondLoop is False:
+            cv_image_crop = resized_img[int(height/1.55):height, 0:width/2]
+        else:
+            cv_image_crop = resized_img[int(height/1.5):height, width/3:width]
 
         hsv = cv.cvtColor(cv_image_crop, cv.COLOR_BGR2HSV)
         h, s, v = cv.split(hsv)
@@ -102,12 +105,14 @@ class ProcessPlate:
                         license_plate_crop = img[topp:botp,leftp:rightp]
                         cv.imshow("plate", license_plate_crop)
                         cv.waitKey(1)
+                        # os.chdir("/home/alexkneifel/LicensePlateData")
+                        # cv.imwrite("plate" + str(uuid.uuid4()) + ".jpg", license_plate_crop)
                         self.plate_search = False
                         return license_plate_crop, True
                     else:
                         return None, False
         return None, True
 
-    def proccessPlate(self, cv_image):
-        plate, canMove = self.__normalize_img(cv_image)
+    def proccessPlate(self, cv_image, secondLoop):
+        plate, canMove = self.__normalize_img(cv_image,secondLoop)
         return plate, canMove

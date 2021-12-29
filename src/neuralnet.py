@@ -18,8 +18,8 @@ set_session(sess1)
 class NeuralNet:
     def __init__(self):
         self.plate_count = 1
-        self.num_model = models.load_model('/home/alexkneifel/Downloads/num_nn')
-        self.char_model = models.load_model('/home/alexkneifel/Downloads/char_nn')
+        self.num_model = models.load_model('/home/alexkneifel/Downloads/num_nn_2')
+        self.char_model = models.load_model('/home/alexkneifel/Downloads/char_nn_2')
 
     def find_chars(self, img_dilation, img_gray):
         count = 0
